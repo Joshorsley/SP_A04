@@ -16,6 +16,7 @@
 
 void didTheSocketSetUp(int socketPassed);
 void bindSocket(struct sockaddr_in server_addr, int listenSocket);
+void socketListeningCheck(int listenSocket);
 
 int main(void){
     // create socket
@@ -32,12 +33,8 @@ int main(void){
     bindSocket(server_addr, listenSocket); 
 
     // begin listening loop for client connections
-    if (listen(listenSocket, 10) == -1){
-        perror("The listener is not working... :(");
-        close(listenSocket);
-        exit(EXIT_FAILURE);
-    }
-    prinft("Listening for connections...]n");       // this is not actually listening correctly yet, still needs more logic to connect clients
+    socketListeningCheck(listenSocket);
+    prinft("Listening for connections...\n");       // this is not actually listening correctly yet, still needs more logic to connect clients
 
         // needs to manage a client list as clients connect
         // needs to access a message queue to process client messages
@@ -50,7 +47,7 @@ int main(void){
 
 void didTheSocketSetUp(int listenSocket){
     if (listenSocket == -1){
-        perror("The socket is not working...");
+        perror("The socket is not working...\n");
         close(listenSocket);
         exit(EXIT_FAILURE);
     }
@@ -58,9 +55,17 @@ void didTheSocketSetUp(int listenSocket){
 
 void bindSocket(struct sockaddr_in server_addr, int listenSocket){
     if(bind(listenSocket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1){
-        perror("Socket didn't bind correctly...");
+        perror("Socket didn't bind correctly...\n");
         close(listenSocket);
         exit(EXIT_FAILURE);
     }
     printf("Socket bound to %d\n", PORT);               // used for debug purposes
+}
+
+void socketListeningCheck(int listenSocket){
+    if(listen(listenSocket, 10) == -1){
+        perror("The listener is not working...\n");
+        close(listenSocket);
+        exit(EXIT_FAILURE);
+    }
 }
