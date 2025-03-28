@@ -176,8 +176,9 @@ int main(void){
 
     
 
-    //TODO: Cleanup and exit
-    close(serverSocket);
+
+    cleanupAndExit();
+
     return 0;
 
 }
@@ -362,6 +363,25 @@ void handleSignal(int sig) {
         serverRunning = 0;
 
         close(serverSocket);
+    }
+}
+
+void checkForSeverShutdown() {
+    if (clientCount == 0) {
+        printf("ALL clients disconnected. Shutting down server...\n");
+        serverRunning = 0;
+
+        int tempSocket = socket(AF_INET, SOCK_STREAM, 0);
+        if (tempSocket >= 0) {
+            struct sockaddr_in tempAddr;
+            memset(&tempAddr, 0, sizeof(tempAddr));
+            tempAddr.sin_family = AF_INET;
+            tempAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+            tempAddr.sin_port - htons(PORT);
+
+            connect(tempSocket, (struct sockaddr*)&tempAddr, sizeof(tempAddr));
+            close(tempSocket);
+        }
     }
 }
 
