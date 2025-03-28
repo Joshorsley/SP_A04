@@ -33,6 +33,7 @@ int serverSocket;
 int serverRunning = 1;
 
 // Function prototypes
+void* clientHandler(void* arg);
 
 
 int main(void){
@@ -81,7 +82,6 @@ int main(void){
         clients[i].socket = -1;
     }
 
-    // TODO: Add main loop to accept connections
     // Main loop to accept Client connections
     while(serverRunning) {
         struct sockaddr_in clientAddr;
@@ -131,6 +131,37 @@ int main(void){
         pthread_mutex_unlock(&clients_mutex);
 
         //TODO: Create a thread to handle this client
+        // Create a thread to handle this client
+        pthread_t thread;
+        int *clientIndex = malloc(sizeof(int)); // Allocate memory for the client index
+        if (clientIndex == NULL) {
+            perror("Failed to allocate memory");
+            pthread_mutex_lock(&clients_mutex);
+            clients[i].active = 0;
+            close(clients[i].socket);
+            clientCount --;
+            pthread_mutex_unlock(&clients_mutex);
+            continue;
+        }
+
+        *clientIndex = i; // Store the index value
+
+        // Create a new thread to handle this client
+        if (pthread_create(&thread, NULL, clientHandler, clientIndex) != 0) {
+            perror("Failed to create thread");
+            free(clientIndex);
+            pthread_mutex_lock(&clients_mutex);
+            clients[i].active = 0;
+            close(clients[i].socket);
+            clientCount --;
+            pthread_mutex_unlock(&clients_mutex);
+            continue;
+        } else {
+            //Detach thread -we don't need to join it later
+            pthread_detach(thread);
+            printf("Created thread for client %d\n", i);
+        }
+        
         printf("New client connected. Total clients: %d\n", clientCount);
     }
 
