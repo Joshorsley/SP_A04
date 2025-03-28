@@ -85,6 +85,7 @@ int main(int argc, char* argv[])
 
 	char userID[MAX_USER_ID];			// User ID
 	char serverName[MAX_SERVER_NAME];	// Server Name
+	char serverAddress[MAX_IP];			// Server Address
 	bool serverOrIPFlag = false;		// Flag to note if 3rd arg is server name (true) or an IP address (false)
 	int socketID;						// Socket ID
 
@@ -95,7 +96,7 @@ int main(int argc, char* argv[])
 	static char timestamp[MAX_TIMESTAMP];			// Timestamp for messages
 	char clientIP[MAX_IP];					// Client IP address for messages 
 	
-
+	bool programEndFlag = false;		// Flag to end the program, turned true when >>bye<< message is sent
 
 
 	printf("========================================\n");	 // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
@@ -127,7 +128,7 @@ int main(int argc, char* argv[])
 		// Get user input and create message with it  
 		if (strlen(message) > 0)
 		{
-			if(!createMessage(clientIP))
+			if(!createMessage(clientIP, programEndFlag))
 			{
 				printf("ERROR: Failed to create message.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 				
@@ -145,10 +146,17 @@ int main(int argc, char* argv[])
 
 		}
 
-
+		// when program end flag is true, end the program 
+		if (programEndflag == true)
+		{
+			break;
+		}
 		
 	
 	}
+
+	programEnd(); // end the program
+	return 0; 
 
 }
 

@@ -9,10 +9,10 @@
 
 
 void getTimestamp();
-bool hiMessage(char* clientIP);
-void byeMessage(char* clientIP);
-bool createMessage(char* clientIP);
-bool recieveMessage(char* clientIP, char userID);
+bool hiMessage(char message, char* clentIP, bool programEndflag, char userID, char timestamp, char clientIP, int socketID);
+void byeMessage(char message, char* clentIP, bool programEndflag, char userID, char timestamp, char clientIP, int socketID);
+bool createMessage(char message, char* clentIP, bool programEndflag, char userID, char timestamp, char clientIP, int socketID);
+bool recieveMessage(char* clientIP, char* userID);
 
 
 

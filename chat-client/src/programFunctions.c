@@ -10,11 +10,22 @@
 #include "programFunctions.h"
 #include "UIFunctions.h"
 #include "messageFunctions.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+#include <ncurses.h>
+#include <unistd.h>
+#include <time.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <pthread.h>
 
 
+#define PORT 8000 // port number for the server
 
  // This function will start the program with initial functions, including the intitial ncurses setup and ">>hi<<" message to the server with initial data 
-bool programStart(int argc, char* argv[], bool serverOrIPFlag)
+bool programStart(int argc, char* argv[], bool serverOrIPFlag, int socketID, char serverName)
 {
 
 
@@ -31,7 +42,7 @@ bool programStart(int argc, char* argv[], bool serverOrIPFlag)
 	if (serverOrIPFlag == true)
 	{
 		// Resolve the server name to an IP address
-		if (!resolveServerName())
+		if (!resolveServerName(serverOrIPFlag, serverName))
 		{
 			printf("ERROR: Failed to resolve server name.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 			return false;
@@ -41,34 +52,38 @@ bool programStart(int argc, char* argv[], bool serverOrIPFlag)
 
 
 	// Create socket
-	if (!createSocket())
+	if (!createSocket(socketID))
 	{
 		printf("ERROR: Failed to create socket.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 		return false;
 	}
 
 	// Connect to the server
-	if (!connectToServer())
+	if (!connectToServer(socketID))
 	{
 		printf("ERROR: Failed to connect to server.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 		return false;
 	}
 
-	// Initialize the ncurses library
-	initscr();
-	cbreak();
-	noecho();
-	keypad(stdscr, TRUE);
+	// Initialize the ncurses library 
 	/*
-	 __
- .--()°'.'
+ __
+.--()°'.'
 '|, . ,'		NCurses Be needed here
  !_-(_\
 
 */
 
 // Create input window for typing messages 
-// Create output window for displaying chat history 
+/*
+ __
+.--()°'.'
+'|, . ,'		NCurses Be needed here
+ !_-(_\
+
+*/
+
+// Create output window for displaying messages
 /*
  __
 .--()°'.'
@@ -110,7 +125,7 @@ bool programStart(int argc, char* argv[], bool serverOrIPFlag)
 
 
 // Function to parse the arguments passed to the program
-bool parseArgs(int argc, char* argv[], bool serverOrIPFlag)
+bool parseArgs(int argc, char* argv[], bool serverOrIPFlag, char userID, char serverName)
 {
 
 
@@ -139,7 +154,19 @@ bool parseArgs(int argc, char* argv[], bool serverOrIPFlag)
 			serverName[MAX_SERVER_NAME] = '\0';
 
 			// Validate the server arg to check if it's an IP address or a server name, set flag accordingly 
-			IPCheck(serverName);
+			// If it is an IP address, then set the server address to the variable for the server address
+			if (IPCheck(serverName) == true)
+			{
+				strncpy(serverAddress, serverName, MAX_IP);
+				serverAddress[MAX_IP] = '\0';
+				serverOrIPFlag = false;
+			}
+			else
+			{
+				serverOrIPFlag = true;
+			}
+
+	
 
 		}
 		else
@@ -179,63 +206,142 @@ bool IPCheck(char* serverName)
 	// Check if the IP address is valid                                          **********TODO**********  If time additional checks for valid IP address (check correct digits present and within valid range)
 
 
+
 	return true;
 }
 
 
-// Use getServerName() to accept the server name and it's IP address
-bool resolveServerName()
+/*
+* FUNCTION:		resolveServerName
+* DESCRIPTION:	This function resolves the server name to an IP address
+* PARAMETERS:	None
+* RETURNS:		boolean value, true if the server name is successfully resolved, false otherwise
+*/
+bool resolveServerName(bool serverOrIPFlag, char serverName)
 {
 
-	// design your chat-client to accept both a server’s (true) name and also a server’s IP Address as this 'name' command - line argument
-			// can verify the (true) name of our computer by looking in the etc/hosts file. 
-			// Chances are that this name is tied / bound too the loopback IP address of 127.0.0.1
-	// If the server name is not found, return false
-	// If the server name is found, return true
+	struct hostent* host_entry;
+	struct in_addr** addr_list;
+
+	// If IPcheck set to false, then it's already an IP address and this function is not needed
+	if (!serverOrIPFlag) 
+	{
+		return true;
+	}
+
+	// Try to resolve the hostname
+	host_entry = gethostbyname(serverName);
+	if (host_entry == NULL) 
+	{
+		printf("ERROR: host entry error when attempting to resolve serverName.\n");
+		return false;
+	}
+
+	// Get the first IP address from the list
+	addr_list = (struct in_addr**)host_entry->h_addr_list;
+	if (addr_list[0] == NULL) 
+	{
+		printf("ERROR: No IP addresses found for hostname.\n");
+		return false;
+	}
+
+	// Convert to string and store in serverAddress for use in the program 
+	strncpy(serverAddress, inet_ntoa(*addr_list[0]), MAX_IP);
+	serverAddress[MAX_IP - 1] = '\0'; 
+
 	return true;
 }
 
 
 
-bool createSocket()
+bool createSocket(int socketID)
 {
-	// Create a socket using socket()
-	// If the socket is created, return true
-	// If the socket is not created, return false
-	return true;
+
+	socketID = socket(AF_INET, SOCK_STREAM, 0); // create socket
+
+	if (socketID == -1)
+	{
+		printf("ERROR: Failed to create socket.\n");
+		return false;
+	}
+
+	// Set up the server address structure
+	struct sockaddr_in serv_addr;
+
+	// Zero out the structure preventing garbage values 
+	memset(&serv_addr, 0, sizeof(serv_addr));
+
+	// Set the server address family to IPv4
+	serv_addr.sin_family = AF_INET;
+
+	// set server IP address
+	serv_addr.sin_addr.s_addr = inet_addr(serverAddress);
+
+	// set up the port number
+	serv_addr.sin_port = htons(PORT);	
+
+	return true; 
+
+
 }
 
 
-bool connectToServer()
+bool connectToServer(int socketID)
 {
-	// Connect to the server using connect()
-	// If the connection is successful, return true
-	// If the connection is not successful, return false
+	// Connect to the server using the socket struct created in createSocket()
+	if (!connect(socketID, (struct sockaddr*)&serv_addr, sizeof(serv_addr)))
+	{
+
+		return false; 
+
+	}
+
 	return true;
+
 }
 
-
+/*
+* FUNCTION:		getClientIP
+* DESCRIPTION:	This function gets the client's IP address and stores it in the clientIP variable
+* PARAMETERS:	char* clientIP - the client's IP address
+* RETURNS:		boolean value, true if the client's IP address is successfully retrieved, false otherwise
+*/
 bool getClientIP(char* clientIP)
 {
-	// Get the client IP address using gethostname() and gethostbyname()
-	// If the client IP address is found, return true
-	// If the client IP address is not found, return false
+	char hostname[256];
+	struct hostent* host_entry;				// pointer to an entry in the hosts database
+
+	// Get the system hostname
+	if (gethostname(hostname, sizeof(hostname)) == -1)
+	{
+		printf("ERROR: Failed to get hostname.\n");
+		return false;
+	}
+
+	// Get the host information from the hostname, store it in the host_entry struct
+	host_entry = gethostbyname(hostname);
+	if (host_entry == NULL)
+	{
+		printf("ERROR: Failed to get host by name.\n");
+		return false;
+	}
+
+	// get the IP address from the struct and store it in the clientIP variable for use in the message functions
+	strcpy(clientIP, inet_ntoa(*(struct in_addr*)host_entry->h_addr_list[0]));
 	return true;
 }
 
 
 
 // *********************************************** TO DO ********************************** make sure everything closes properly 
-void programEnd()
+void programEnd(int socketID)
 {
 
 	// Close the connection to the server
 	close(socketID);
 
 	// Clean the ncurses windows
-	delwin(input_win);
-	delwin(output_win);
-	endwin();
+
 	/*
 __
 .--()°'.'

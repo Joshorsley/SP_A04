@@ -12,6 +12,8 @@
 #include "UIFunctions.h"
 
 
+#define MAX_BUFFER 1024 // max buffer size	
+
 void getTimestamp()
 {
 	time_t currentTime;
@@ -24,7 +26,7 @@ void getTimestamp()
 
 
 
-bool hiMessage(char* clientIP)
+bool hiMessage(char message, char* clentIP, bool programEndflag, char userID, char timestamp, char clientIP, int socketID)
 {
 	// Send initial message to the server (Say >>Hi<< to the server)
 		// send the message to the server using send()												**********TODO**********  add the IP address of the client to the beginningmessage
@@ -34,16 +36,10 @@ bool hiMessage(char* clientIP)
 	// Get the current time stamp
 	getTimestamp();
 
+	message = ">>Hi<< Server, lets connect.";
 
-	// Format message with necessary information
-	snprintf(message, sizeof(message),
-		"%.15s_[%.5s]_>>_%s_(%.8s)",		// message formatting string 
-		clientIP,							// Positions 1-15: IP address
-		userID,								// Positions 17-23: [userID] in square brackets and 5 chars max
-		">>Hi<< Server, lets connect.",     // Positions 28-67: message with 
-		timestamp);							// Positions 69-78: (HH:MM:SS)
-
-	if (send(socketID, message, strlen(message), 0) == -1)
+	// Send the message to the server
+	if (sendMessage(essage, clientIP, userID, timestamp, programEndFlag, socketID))
 	{
 		printf("ERROR: >>Hi<< Message to Server failed to send");
 		return false;
@@ -55,39 +51,34 @@ bool hiMessage(char* clientIP)
 
 }
 
-void byeMessage(char* clentIP)
+void byeMessage(char message, char* clentIP, bool programEndflag, char userID, char timestamp, char clientIP, int socketID)
 {
 	// Send a message to the server to close the connection and exit the program
 		// send the message to the server using send()												**********TODO**********  add the IP address of the client to the beginningmessage
-	char byeMessage[MAX_SNT_MESSAGE];
 
+	message = ">>Bye<< Server, closing connection."
 
 	// Get the current time stamp
 	getTimestamp();
 
-	// Format message with necessary information
-	snprintf(message, sizeof(message),
-		"%.15s_[%.5s]_>>_%s_(%.8s)",		// message formatting string 
-		clientIP,							// Positions 1-15: IP address
-		userID,								// Positions 17-23: [userID] in square brackets and 5 chars max
-		">>Bye<< Server, closing connection.",     // Positions 28-67: message with 
-		timestamp);							// Positions 69-78: time in brackets (HH:MM:SS)
 
-	if (send(socketID, message, strlen(message), 0) == -1)
+	if (!sendMessage(message, clientIP, userID, timestamp, programEndFlag, socketID))
 	{
-		printf("ERROR: >>Bye<< Message to Server failed to send"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+
 		return false;
 	}
+
 
 	// DO NOT DISPLAY THIS MESSAGE IN THE OUTPUT WINDOW ************************************DELETE BEFORE SUBMISSION
 
 	// Begin the process to close the connection and exit the program
-	programEnd();
+	endProgramFlag = true; 
+	return true; 
 
 }
 
 
-bool createMessage(char clientIP)
+bool createMessage(char message, char* clentIP, bool programEndflag, char userID, char timestamp, char clientIP, int socketID)
 {
 	// Create a message to send to the server and display in the Output Window
 
@@ -116,27 +107,21 @@ bool createMessage(char clientIP)
 	// if user enters the >>bye<< message, send the shutdown message to the server and close the connection
 	if (stcmp(messageContent, ">>bye<<") == 0)
 	{
-		if (!byeMessage(clientIP))
+		if (!byeMessage(message, clientIP, userID, timestamp, programEndFlag, socketID))
 		{
 			return false;
 		}
 
+		// if bye message sent, end the createMessage function here and return to main to end program 
+		// DO NOT DISPLAY THE GOODBYE MESSAGE IN THE OUTPUT WINDOW ************************************DELETE BEFORE SUBMISSION
 		return true;
 	}
 
 
 
-	// Format message with necessary information
-	snprintf(message, sizeof(message),
-		"%.15s_[%.5s]_>>_%.80s_(%.8s)",	// message formatting string 
-		clientIP,							// Positions 1-15: IP address
-		userID,								// Positions 17-23: [userID] in square brackets and 5 chars max
-		message,							// Positions 28-67: 80 char message
-		timestamp);							// Positions 69-78: (HH:MM:SS)
-
-
-	if (send(socketID, message, strlen(message), 0) == -1)
+	if (!sendMessage(message, clientIP, userID, timestamp, programEndFlag, socketID))
 	{
+
 		return false;
 	}
 
@@ -158,9 +143,44 @@ bool createMessage(char clientIP)
 
 
 
+bool sendMessage(char message, char* clentIP, bool programEndflag, char userID, char timestamp, char clientIP, int socketID)
+{
+
+
+	// Format message with necessary information
+	snprintf(message, sizeof(message),
+		"%.15s_[%.5s]_>>_%.80s_(%.8s)",		// message formatting string 
+		clientIP,							// Positions 1-15: IP address
+		userID,								// Positions 17-23: [userID] in square brackets and 5 chars max
+		message,							// Positions 28-67: up to 80 char message
+		timestamp);							// Positions 69-78: timestamp in brackets (HH:MM:SS)
+
+
+	if (send(socketID, message, strlen(message), 0) == -1)
+	{
+		printf("ERROR: Failed to send message to server.\n");
+		return false;
+	}
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
 bool recieveMessage(char* clientIP, char* userID)
 {
-	// Receive a message from the server using recv()
+	// Receive a message from the server 
+	char* buffer = (char*)calloc(MAX_BUFFER, sizeof(char));
+	read(socketID, buffer, MAX_BUFFER);
 	// Messages will be sent from the server in 40 character parcel chunks to stitch together 
 	// Display the recieved message in the Incoming Messages  Window
 
