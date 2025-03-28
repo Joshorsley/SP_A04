@@ -8,6 +8,9 @@
 #include <pthread.h>
 
 // Constants
+#define ERROR_CODE -1       // default error codes for the program
+#define SUCCESS 0           // default success code for the program
+#define SERVER_RUNNING 2    // define for the while loop to keep server running
 #define PORT 8000           // this is just the defaul I chose, it can change
 #define BACKLOG 10          // not sure if this is really how I should name this...
 #define MAX_NAME_LENGTH 6   //Cant remember the number 
@@ -23,9 +26,11 @@
 void didTheSocketSetUp(int socketPassed);
 void didTheSocketBind(struct sockaddr_in server_addr, int listenSocket);
 void socketListeningCheck(int listenSocket);
+int canServerAcceptClient(int clientCount);
 void* clientHandler(void* clientSocketPtr);
 void handleClient(int clientSocket);
 
+// !!IF WE ARE GOING TO USE THIS STRUCT, VARIABLES MUST BE ELIMINATED AND THIS STRUCT USED IN THEIR PLACE!!
 typedef struct {
     int socket;
     char username[MAX_NAME_LENGTH];
@@ -36,6 +41,7 @@ int main(void){                                         // pretty sure we need t
     // create socket
     int listenSocket;
     int clientCount = 0;                                // move this to a struct???
+    pthread_mutex_t clientCountMutex; 
     struct sockaddr_in server_addr; 
     listenSocket = socket(AF_INET, SOCK_STREAM, 0);
     didTheSocketSetUp(listenSocket);
@@ -50,52 +56,50 @@ int main(void){                                         // pretty sure we need t
     socketListeningCheck(listenSocket);
     printf("Listening for connections...\n");
     
+    int serverShutdownCode = SERVER_RUNNING;
     // begin listening loop for client connections
-    while(1){                                        // this needs to be better implemented, but I am using it for now
-        
-        // lock the mutex before checking how many clients there are
-            // ADD MUTEX!!!
-            // LOCK MUTEX
-        // check if the server has reached max clients
+    while(serverShutdownCode == SERVER_RUNNING){                                 // can change the serverShutdownCode when last client disconnects
+        int responseCode = ERROR_CODE; 
+        Pthread_mutex_lock(&clientCountMutex); 
+        responseCode = canServerAcceptClient(clientCount);          // lock the mutex before checking how many clients there are
+        if(responseCode == SUCCESS){
+            int clientSocket = accept(listenSocket, NULL, NULL); 
+            if(clientSocket == ERROR_CODE){
+                perror("Accepting client connection failed...\n");
+                pthread_mutex_unlock(&clientCountMutex);
+                continue; 
+            }
 
-        // if no - accept incoming client
-        if(clientCount >= MAX_CLIENTS){
-            printf("Maximum number of clients are currently connected. Cannot accept new connections.\n");
+            clientCount++;
+            printf("New client has connected. Total clients: %d\n", clientCount);       // for debugging
+
+            //UNLOCK MUTEX
+            pthread_mutex_unlock(&clientCountMutex);
+
+            // create a thread for the new client
+            pthread_t clientThread; 
+            if(pthread_create(&clientThread, NULL, clientHandler, (void*)&clientSocket) != 0){
+                perror("Thread creation failed...\n");
+            }
+            pthread_detach(clientThread); 
+        } else{
+            pthread_mutex_unlock(&clientCountMutex);
             sleep(1);
-            continue;
-        }
-
-        int clientSocket = accept(listenSocket, NULL, NULL); 
-        if(clientSocket == -1){
-            perror("Accepting client connection failed...\n");
-            // UNLOCK MUTEX -- does this conflict with the unlock further down?
             continue; 
         }
-
-        clientCount++;
-        printf("New client has connected. Total clients: %d\n", clientCount);       // for debugging
-
-        //UNLOCK MUTEX
-
-        // create a thread for the new client
-        pthread_t clientThread; 
-        if(pthread_create(&clientThread, NULL, clientHandler, (void*)&clientSocket) != 0){
-            perror("Thread creation failed...\n");
-        }
-        //kill the thread before exiting the looping
-        pthread_detach(clientThread); 
+        // code here to check client statuses -- if they have all sent the >>bye<< message, then change the serverShutdownCode to anything but 2!
     }
-
+    
     // needs to manage a client list as clients connect
     // needs to access a message queue to process client messages
     // somewhere in this mess a mutex/semaphore is initialized to manage and protect data structure
 
     close(listenSocket);
-    return 0;                                       // lets us know if it closed correctly by returning a 0
+    return SUCCESS;                                    // lets us know if it closed correctly by returning a 0
 }
 
 void didTheSocketSetUp(int listenSocket){
-    if (listenSocket == -1){
+    if (listenSocket == ERROR_CODE){
         perror("The socket is not working...\n");
         close(listenSocket);
         exit(EXIT_FAILURE);
@@ -103,7 +107,7 @@ void didTheSocketSetUp(int listenSocket){
 }
 
 void didTheSocketBind(struct sockaddr_in server_addr, int listenSocket){
-    if(bind(listenSocket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1){
+    if(bind(listenSocket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == ERROR_CODE){
         perror("Socket didn't bind correctly...\n");
         close(listenSocket);
         exit(EXIT_FAILURE);
@@ -112,12 +116,21 @@ void didTheSocketBind(struct sockaddr_in server_addr, int listenSocket){
 }
 
 void socketListeningCheck(int listenSocket){
-    if(listen(listenSocket, 10) == -1){
+    if(listen(listenSocket, 10) == ERROR_CODE){
         perror("The listener is not working...\n");
         close(listenSocket);
         exit(EXIT_FAILURE);
     }
     return;
+}
+
+int canServerAcceptClient(int clientCount){
+    int responseCode = SUCCESS;
+    if(clientCount >= MAX_CLIENTS){
+        printf("Maximum number of clients are currently connected.\n");
+        responseCode = ERROR_CODE;
+    }
+    return responseCode;
 }
 
 // this should run in its own thread to handle each client
