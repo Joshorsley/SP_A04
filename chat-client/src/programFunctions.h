@@ -14,4 +14,4 @@ bool createSocket(int socketID);
 bool connectToServer(int socketID);
 bool IPCheck(char* serverName);
 bool getClientIP(char* clientIP);
-void programEnd(int socketID);
+void programEnd(int socketID, WINDOW* inWin, WINDOW* outWin);

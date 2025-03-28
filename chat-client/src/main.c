@@ -89,8 +89,10 @@ int main(int argc, char* argv[])
 	bool serverOrIPFlag = false;		// Flag to note if 3rd arg is server name (true) or an IP address (false)
 	int socketID;						// Socket ID
 
-	WINDOW* input_win;					// ncurses windows for input 
-	WINDOW* output_win;					// ncurses windows for output
+	WINDOW* inWin;					// ncurses windows for input 
+	WINDOW* outWin;					// ncurses windows for output
+	UIProps inWinProps;				// UI properties for input window
+	UIProps outWinProps;				// UI properties for output window
 
 	char message[MAX_BUFFER];           // Buffer for user messages
 	static char timestamp[MAX_TIMESTAMP];			// Timestamp for messages
@@ -102,7 +104,28 @@ int main(int argc, char* argv[])
 	printf("========================================\n");	 // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 	printf("Welcome to the Chat - Client Terminal\n");	 // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 
+	// Create UI windows
+	initscr(); // Initialize ncurses
+    refresh(); // Refresh the screen to show changes
 
+	// Set properties for input window
+	inWinProps.height = 10; // Height of the input window
+	inWinProps.width = COLS; // Width of the input window
+	inWinProps.starty = 0; // Starting y position of the input window
+	inWinProps.startx = 0; // Starting x position of the input window
+
+	// Set properties for output window
+	outWinProps.height = LINES - inWinProps.height - 1; // Height of the output window
+	outWinProps.width = COLS; // Width of the output window
+	outWinProps.starty = 0; // Starting y position of the output window
+	outWinProps.startx = inWinProps.height + 1; // Starting x position of the output window
+
+	// Create input and output windows
+	inWin = createNewWin(inWinProps.height, inWinProps.width, inWinProps.starty, inWinProps.startx); // Create input window
+	scrollok(inWin, TRUE);
+
+	outWin = createNewWin(outWinProps.height, outWinProps.width, outWinProps.starty, outWinProps.startx); // Create output window
+	scrollok(outWin, TRUE);
 
 	// Start the program with initial functions 
 	if (!programStart(argc, argv))
@@ -113,17 +136,16 @@ int main(int argc, char* argv[])
 	
 
 	// Loop for User Input 
-	while(true)
+	while(programEndFlag)
 	{
-		// Clear the input window
-
-		/*
-	 __
- .--()°'.'
-'|, . ,'		NCurses Be needed here
- !_-(_\
-
-*/
+		// Get user input
+		input(inWin, message); // Get user input from the input window
+		// Check if the user wants to exit
+		if (byeCheck(message))
+		{
+			programEndFlag = true; // Set the program end flag to true
+			break; // Exit the loop
+		}
 
 		// Get user input and create message with it  
 		if (strlen(message) > 0)
@@ -136,26 +158,13 @@ int main(int argc, char* argv[])
 			}
 
 			// Display the message in the Output Window.
-			/*
-	 __
- .--()°'.'
-'|, . ,'		NCurses Be needed here
- !_-(_\
-
-*/
+			output(outWin, message); // Display the message in the output window
 
 		}
 
-		// when program end flag is true, end the program 
-		if (programEndflag == true)
-		{
-			break;
-		}
-		
-	
 	}
 
-	programEnd(); // end the program
+	programEnd(socketID, inWin, outWin); // end the program
 	return 0; 
 
 }

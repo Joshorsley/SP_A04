@@ -334,21 +334,14 @@ bool getClientIP(char* clientIP)
 
 
 // *********************************************** TO DO ********************************** make sure everything closes properly 
-void programEnd(int socketID)
+void programEnd(int socketID, WINDOW* inWin, WINDOW* outWin)
 {
 
 	// Close the connection to the server
 	close(socketID);
 
 	// Clean the ncurses windows
-
-	/*
-__
-.--()°'.'
-'|, . ,'		NCurses Be needed here
- !_-(_\
-
-*/
+	endProg(inWin, outWin);
 
 // Exit the program
 	printf("Chat - Client is now closing, Goodbye!\n");
