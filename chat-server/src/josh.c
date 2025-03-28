@@ -281,9 +281,7 @@ void broadcastMessage(char *message, int senderIndex) {
             // For the sender, use '>>' for others use '<<'
             char direction = ( i == senderIndex) ? '>' : '<';
 
-            //TODO: Call function to format and send message
-            // For now just echo the raw message
-            send(clients[i].socket, message, strlen(message), 0);
+            parcelMessage(clients[i].socket, senderIP, clients[senderIndex].username, message, direction);
         }
     }
 
@@ -308,4 +306,43 @@ void formatAndSendMessage(int receiverSocket, char* senderIP, char* senderName, 
             "%-15s [%-5s] %c%c %-40s (%s)\n",
             senderIP, senderName, direction, direction, message, timestamp);
     send(receiverSocket, formattedMsg, strlen(formattedMsg), 0);
+}
+
+void parcelMessage(int receiverSocket, char* senderIP, char* senderName, char* message, char direction) {
+    int messageLen = strlen(message);
+    int pos = 0;
+
+    // Break the message into chunks of CHUNK_SIZE characters
+    while (pos < messageLen) {
+        char chunk[CHUNK_SIZE + 1];
+        int chunkSize = 0;
+
+        // Try to break at a space if possible
+        int breakPoint = pos + CHUNK_SIZE;
+        if (breakPoint < messageLen) {
+            // Look for a space to break at
+            int j = breakPoint;
+            while (j > pos && message[j] != ' ') {
+                j --;
+            }
+            // If we found a space, break there
+            if (j > pos) {
+                breakPoint = j + 1; // Include the space in the first chunk
+            } else {
+                breakPoint = messageLen;
+            }
+
+            // Copy the chunk
+            chunkSize = breakPoint - pos;
+            if (chunkSize > CHUNK_SIZE) {
+                chunkSize = CHUNK_SIZE; // Ensure we do't exceed CHUNK_SIZE
+            }
+            strncpy(chunk, message + pos, chunkSize);
+            chunk[chunkSize] = '\0';
+
+            formatAndSendMessage(receiverSocket, senderIP, senderName, chunk, direction);
+
+            pos += chunkSize;
+        }
+    }
 }
