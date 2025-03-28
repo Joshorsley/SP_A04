@@ -219,7 +219,7 @@ void* clientHandler(void* arg) {
 
     printf("Client %d registered with username: %s\n", index, clients[index].username);
 
-    //TODO: Announce that a new user has joined
+    //Announce that a new user has joined
     char announcement[BUFFER_SIZE];
     snprintf(announcement, sizeof(announcement), "User %s has joined the chat", clients[index].username);
     broadcastMessage(announcement, index);
@@ -237,7 +237,7 @@ void* clientHandler(void* arg) {
             break;
         }
 
-        // TODO: Process and broadcast the message
+        // Process and broadcast the message
         broadcastMessage(buffer, index);
     }
 
@@ -247,7 +247,7 @@ void* clientHandler(void* arg) {
         printf("Error receiving from client %s\n", clients[index].username);
     }
 
-    // TODO: Announce that the user has left
+    // Announce that the user has left
     snprintf(announcement, sizeof(announcement), "User %s has left the chat", clients[index].username);
     broadcastMessage(announcement, index);
 
