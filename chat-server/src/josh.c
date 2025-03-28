@@ -289,3 +289,23 @@ void broadcastMessage(char *message, int senderIndex) {
 
     pthread_mutex_unlock(&clients_mutex);
 }
+
+void formatAndSendMessage(int receiverSocket, char* senderIP, char* senderName, char* message, char direction) {
+
+    char formattedMsg[BUFFER_SIZE];
+    time_t now;
+    struct tm *timeinfo;
+    char timestamp[10];
+
+    // Get current time
+    time(&now);
+    timeinfo = localtime(&now);
+    strftime(timestamp, sizeof(timestamp), "%H:%M:%S", timeinfo);
+
+    // Format according to requirements:
+    // XXX.XXX.XXX.XXX_[AAAAA]_>>_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_(HH:MM:SS)
+    snprintf(formattedMsg, sizeof(formattedMsg),
+            "%-15s [%-5s] %c%c %-40s (%s)\n",
+            senderIP, senderName, direction, direction, message, timestamp);
+    send(receiverSocket, formattedMsg, strlen(formattedMsg), 0);
+}
