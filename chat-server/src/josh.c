@@ -161,7 +161,7 @@ int main(void){
             pthread_detach(thread);
             printf("Created thread for client %d\n", i);
         }
-        
+
         printf("New client connected. Total clients: %d\n", clientCount);
     }
 
@@ -170,5 +170,55 @@ int main(void){
     //TODO: Cleanup and exit
     close(serverSocket);
     return 0;
+
+}
+
+void* clientHandler(void* arg) {
+    //Extract the client index and free the memory
+    int index = *((int*)arg);
+    free(arg);
+
+    // Get the client socket and prepare a buffer
+    int clientSocket = clients[index].socket;
+    char buffer[BUFFER_SIZE];
+    int bytesRead;
+
+    // Get the client's IP address as a string
+    char clientIP[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &(clients[index].address.sin_addr), clientIP, INET_ADDRSTRLEN);
+
+    printf("Handling client %d with IP \n", index, clientIP);
+
+    // First message from client should be the username
+    bytesRead = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
+    if (bytesRead <= 0) {
+        printf("Client disconnected before sending username\n");
+
+        // Lock the mutex before updating shared data
+        pthread_mutex_lock(&clients_mutex);
+
+        // Clean up and mark slot as inactive
+        close(clients[index].socket);
+        clients[index].active = 0;
+        clientCount --;
+
+        pthread_mutex_unlock(&clients_mutex);
+
+        return NULL;
+
+    }
+    
+    //NULL -terminate the received data
+    buffer[bytesRead] = '\0';
+
+    // Store the username 
+    pthread_mutex_lock(&clients_mutex);
+    strncpy(clients[index].username, buffer, MAX_NAME_LENGTH -1);
+    clients[index].username[MAX_NAME_LENGTH -1] = '\0';
+    pthread_mutex_unlock(&clients_mutex);
+
+    printf("Client %d registered with username: %s\n", index, clients[index].username);
+
+
 
 }
