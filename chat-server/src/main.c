@@ -10,6 +10,7 @@
 // Constants
 #define PORT 8000           // this is just the defaul I chose, it can change
 #define BACKLOG 10          // not sure if this is really how I should name this...
+#define MAX_NAME_LENGTH 6   //Cant remember the number 
 #define MAX_CLIENTS 10
 #define BUFFER_SIZE 1024    // buffer for message size - this is not yet set to the correct size
                             // need to figure out the correct buffer size for requirements
@@ -22,8 +23,14 @@
 void didTheSocketSetUp(int socketPassed);
 void didTheSocketBind(struct sockaddr_in server_addr, int listenSocket);
 void socketListeningCheck(int listenSocket);
-void* clientHandler(void* clientSocket);
+void* clientHandler(void* clientSocketPtr);
 void handleClient(int clientSocket);
+
+typedef struct {
+    int socket;
+    char username[MAX_NAME_LENGTH];
+    struct sockaddr_in address;
+} clientsInfo;
 
 int main(void){                                         // pretty sure we need to add some args to this...
     // create socket
@@ -41,7 +48,7 @@ int main(void){                                         // pretty sure we need t
     didTheSocketBind(server_addr, listenSocket); 
 
     socketListeningCheck(listenSocket);
-    prinft("Listening for connections...\n");
+    printf("Listening for connections...\n");
     
     // begin listening loop for client connections
     while(1){                                        // this needs to be better implemented, but I am using it for now
@@ -110,11 +117,12 @@ void socketListeningCheck(int listenSocket){
         close(listenSocket);
         exit(EXIT_FAILURE);
     }
+    return;
 }
 
 // this should run in its own thread to handle each client
-void* clientHandler(void* clientSocket){
-    int clientSocket = *((int*)clientSocket); 
+void* clientHandler(void* clientSocketPtr) {
+    int clientSocket = *((int*)clientSocketPtr); 
 
     // this function loops listening to the client
     handleClient(clientSocket);
@@ -122,6 +130,8 @@ void* clientHandler(void* clientSocket){
     // unlock the mutex here after the handleClient function has finished and client disconnects
 
     close(clientSocket);
+
+    return NULL;
 }
 
 // this is preticated on the fact that the client doesn't stay connected long term,
@@ -143,4 +153,6 @@ void handleClient(int clientSocket){
     } else{
         perror("Receive failed.\n");
     }
+
+    return;
 }
