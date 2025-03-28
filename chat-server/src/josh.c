@@ -35,7 +35,7 @@ int serverSocket;
 int serverRunning = 1;
 
 // Function prototypes
-int createSeverSocket(int port);
+int createServerSocket(int port);
 void* clientHandler(void* arg);
 void broadcastMessage(char *message, int senderIndex);
 void formatAndSendMessage(int receiverSocket, char* senderIP, char* senderName, char* message, char direction);
@@ -241,7 +241,7 @@ void* clientHandler(void* arg) {
         clients[index].active = 0;
         clientCount --;
 
-        checkForSeverShutdown();
+        checkForServerShutdown();
 
         pthread_mutex_unlock(&clients_mutex);
 
@@ -300,7 +300,7 @@ void* clientHandler(void* arg) {
     clients[index].active = 0;
     clientCount --;
 
-    checkForSeverShutdown();
+    checkForServerShutdown();
 
     pthread_mutex_unlock(&clients_mutex);
 
