@@ -59,7 +59,7 @@ int main(void){                                         // pretty sure we need t
     int serverShutdownCode = SERVER_RUNNING;
     while(serverShutdownCode == SERVER_RUNNING){
         int responseCode = ERROR_CODE; 
-        Pthread_mutex_lock(&clientListMutex); 
+        pthread_mutex_lock(&clientListMutex); 
 
         // check if we server can accept new clients
         responseCode = canServerAcceptClient(clientCount);
