@@ -8,6 +8,9 @@
 #include <pthread.h>
 
 // Constants
+#define ERROR_CODE -1       // default error codes for the program
+#define SUCCESS 0           // default success code for the program
+#define SERVER_RUNNING 2    // define for the while loop to keep server running
 #define PORT 8000           // this is just the defaul I chose, it can change
 #define BACKLOG 10          // not sure if this is really how I should name this...
 #define MAX_NAME_LENGTH 6   //Cant remember the number 
@@ -15,27 +18,29 @@
 #define BUFFER_SIZE 1024    // buffer for message size - this is not yet set to the correct size
                             // need to figure out the correct buffer size for requirements
 
-// #this will be the entry point for the chat-server
-// must contain about 11 threads, 1 for main program, 10 for chat clients
-// must take two command line arguments:
-    // chat-client -user<userID> -server<server name>
+
 
 void didTheSocketSetUp(int socketPassed);
 void didTheSocketBind(struct sockaddr_in server_addr, int listenSocket);
 void socketListeningCheck(int listenSocket);
+int canServerAcceptClient(int clientCount);
 void* clientHandler(void* clientSocketPtr);
-void handleClient(int clientSocket);
+void sendMessageToClients(const char* message, int senderSocket);
 
+// !!IF WE ARE GOING TO USE THIS STRUCT, VARIABLES MUST BE ELIMINATED AND THIS STRUCT USED IN THEIR PLACE!!
 typedef struct {
     int socket;
     char username[MAX_NAME_LENGTH];
     struct sockaddr_in address;
 } clientsInfo;
 
+pthread_mutex_t clientListMutex = PTHREAD_MUTEX_INITIALIZER;
+clientsInfo clients[MAX_CLIENTS]; 
+int clientCount = 0;
+
 int main(void){                                         // pretty sure we need to add some args to this...
     // create socket
     int listenSocket;
-    int clientCount = 0;                                // move this to a struct???
     struct sockaddr_in server_addr; 
     listenSocket = socket(AF_INET, SOCK_STREAM, 0);
     didTheSocketSetUp(listenSocket);
@@ -50,52 +55,55 @@ int main(void){                                         // pretty sure we need t
     socketListeningCheck(listenSocket);
     printf("Listening for connections...\n");
     
-    // begin listening loop for client connections
-    while(1){                                        // this needs to be better implemented, but I am using it for now
-        
-        // lock the mutex before checking how many clients there are
-            // ADD MUTEX!!!
-            // LOCK MUTEX
-        // check if the server has reached max clients
+    // can change the serverShutdownCode when last client disconnects
+    int serverShutdownCode = SERVER_RUNNING;
+    while(serverShutdownCode == SERVER_RUNNING){
+        int responseCode = ERROR_CODE; 
+        pthread_mutex_lock(&clientListMutex); 
 
-        // if no - accept incoming client
-        if(clientCount >= MAX_CLIENTS){
-            printf("Maximum number of clients are currently connected. Cannot accept new connections.\n");
+        // check if we server can accept new clients
+        responseCode = canServerAcceptClient(clientCount);
+        if(responseCode == SUCCESS){
+            int clientSocket = accept(listenSocket, NULL, NULL); 
+            // if already at max clients
+            if(clientSocket == ERROR_CODE){
+                perror("Accepting client connection failed...\n");
+                pthread_mutex_unlock(&clientListMutex);
+                continue; 
+            }
+
+            //add a new client to the client list
+            clients[clientCount].socket = clientSocket; 
+            clientCount++;
+            printf("New client has connected. Total clients: %d\n", clientCount);       // for debugging
+
+            //UNLOCK MUTEX
+            pthread_mutex_unlock(&clientListMutex);
+
+            // create a thread for the new client
+            pthread_t clientThread; 
+            if(pthread_create(&clientThread, NULL, clientHandler, (void*)&clientSocket) != 0){
+                perror("Thread creation failed...\n");
+            }
+            pthread_detach(clientThread); 
+        } else{
+            pthread_mutex_unlock(&clientListMutex);
             sleep(1);
-            continue;
-        }
-
-        int clientSocket = accept(listenSocket, NULL, NULL); 
-        if(clientSocket == -1){
-            perror("Accepting client connection failed...\n");
-            // UNLOCK MUTEX -- does this conflict with the unlock further down?
             continue; 
         }
-
-        clientCount++;
-        printf("New client has connected. Total clients: %d\n", clientCount);       // for debugging
-
-        //UNLOCK MUTEX
-
-        // create a thread for the new client
-        pthread_t clientThread; 
-        if(pthread_create(&clientThread, NULL, clientHandler, (void*)&clientSocket) != 0){
-            perror("Thread creation failed...\n");
-        }
-        //kill the thread before exiting the looping
-        pthread_detach(clientThread); 
+        // code here to check client statuses -- if they have all sent the >>bye<< message, then change the serverShutdownCode to anything but 2!
     }
-
+    
     // needs to manage a client list as clients connect
     // needs to access a message queue to process client messages
     // somewhere in this mess a mutex/semaphore is initialized to manage and protect data structure
 
     close(listenSocket);
-    return 0;                                       // lets us know if it closed correctly by returning a 0
+    return SUCCESS;                                    // lets us know if it closed correctly by returning a 0
 }
 
 void didTheSocketSetUp(int listenSocket){
-    if (listenSocket == -1){
+    if (listenSocket == ERROR_CODE){
         perror("The socket is not working...\n");
         close(listenSocket);
         exit(EXIT_FAILURE);
@@ -103,7 +111,7 @@ void didTheSocketSetUp(int listenSocket){
 }
 
 void didTheSocketBind(struct sockaddr_in server_addr, int listenSocket){
-    if(bind(listenSocket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1){
+    if(bind(listenSocket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == ERROR_CODE){
         perror("Socket didn't bind correctly...\n");
         close(listenSocket);
         exit(EXIT_FAILURE);
@@ -112,7 +120,7 @@ void didTheSocketBind(struct sockaddr_in server_addr, int listenSocket){
 }
 
 void socketListeningCheck(int listenSocket){
-    if(listen(listenSocket, 10) == -1){
+    if(listen(listenSocket, 10) == ERROR_CODE){
         perror("The listener is not working...\n");
         close(listenSocket);
         exit(EXIT_FAILURE);
@@ -120,39 +128,59 @@ void socketListeningCheck(int listenSocket){
     return;
 }
 
+int canServerAcceptClient(int clientCount){
+    int responseCode = SUCCESS;
+    if(clientCount >= MAX_CLIENTS){
+        printf("Maximum number of clients are currently connected.\n");
+        responseCode = ERROR_CODE;
+    }
+    return responseCode;
+}
+
 // this should run in its own thread to handle each client
 void* clientHandler(void* clientSocketPtr) {
     int clientSocket = *((int*)clientSocketPtr); 
+    char buffer[BUFFER_SIZE];
+    int bytesRead; 
 
-    // this function loops listening to the client
-    handleClient(clientSocket);
+    // receive the incoming messages
+    while((bytesRead = recv(clientSocket, buffer, sizeof(buffer) - 1, 0)) > 0){
+        buffer[bytesRead] = '\0';
+        printf("Message received is: %s\n", buffer);    // for debugging purposes
+        // send message to all clients
+        sendMessageToClients(buffer, clientSocket); 
+    }
 
-    // unlock the mutex here after the handleClient function has finished and client disconnects
+    // this logic should probably use the specific >>bye<< message instead of the bytesRead = 0
+    if(bytesRead == 0){
+        printf("Client has diconnected.\n");
+    } else{
+        perror("Receive failed.\n");
+    }
 
+    // remove the client once they disconnect
+    pthread_mutex_lock(&clientListMutex);
+    for(int i = 0; i < clientCount; i++){
+        if(clients[i].socket == clientSocket){
+            clients[i] = clients[clientCount - 1];
+            clientCount--;
+            break;          // prevent going through the rest of the list if you find the client early
+        }
+    }
+    pthread_mutex_unlock(&clientListMutex);
     close(clientSocket);
 
     return NULL;
 }
 
-// this is preticated on the fact that the client doesn't stay connected long term,
-// it will need to be reworked to handle a constantly connected client
-void handleClient(int clientSocket){
-    char buffer[BUFFER_SIZE];
-    int bytesRead; 
+void sendMessageToClients(const char* message, int senderSocket){
+    pthread_mutex_lock(&clientListMutex);
 
-    while((bytesRead = recv(clientSocket, buffer, sizeof(buffer) - 1, 0)) > 0){
-        buffer[bytesRead] = '\0';
-        printf("Received from client: %s\n", buffer);       // for debugging
-
-        // echo the message to the client(s)
-        send(clientSocket, buffer, bytesRead, 0);
+    for(int i = 0; i < clientCount; i++){
+        if(clients[i].socket != senderSocket){
+            send(clients[i].socket, message, strlen(message), 0);
+        }
     }
 
-    if(bytesRead == 0){
-        printf("Client has disconnected.\n");
-    } else{
-        perror("Receive failed.\n");
-    }
-
-    return;
+    pthread_mutex_unlock(&clientListMutex);
 }
