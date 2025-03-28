@@ -219,6 +219,43 @@ void* clientHandler(void* arg) {
 
     printf("Client %d registered with username: %s\n", index, clients[index].username);
 
+    //TODO: Announce that a new user has joined
 
+    // Main message loop - receive and process messages
+    while ((bytesRead = recv(clientSocket, buffer, sizeof(buffer) -1, 0)) > 0) {
+        // NULL- terminate the received data
+        buffer[bytesRead]= '\0';
 
+        printf("Received from %s: %S\n", clients[index].username, buffer);
+
+        // Check if client wants to disconnect
+        if (strcmp(buffer, ">>bye<<") == 0) {
+            printf("Client %s is disconnecting\n", clients[index].username);
+            break;
+        }
+
+        // TODO: Process and broadcast the message
+    }
+
+    if (bytesRead == 0) {
+        printf("Client %s closed connection\n", clients[index].username);
+    }else if (bytesRead < 0) {
+        printf("Error receiving from client %s\n", clients[index].username);
+    }
+
+    // TODO: Announce that the user has left
+
+    // Lock the mutex before updating shared data
+    pthread_mutex_lock(&clients_mutex);
+
+    // Clean up and mark slot as inactive
+    close(clients[index].socket);
+    clients[index].active = 0;
+    clientCount --;
+
+    pthread_mutex_unlock(&clients_mutex);
+
+    printf("Client %d cleaned up, total clients: %d\n", index, clientCount);
+
+    return NULL;
 }
