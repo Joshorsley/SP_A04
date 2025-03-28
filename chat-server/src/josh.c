@@ -39,6 +39,8 @@ void* clientHandler(void* arg);
 void broadcastMessage(char *message, int senderIndex);
 void formatAndSendMessage(int receiverSocket, char* senderIP, char* senderName, char* message, char direction);
 void parcelMessage(int receiverSocket, char* senderIP, char* senderName, char* message, char direction);
+void handleSignal(int sig);
+void cleanupAndExit(void);
 
 
 
@@ -57,6 +59,8 @@ int main(void){
         close(serverSocket);
         exit(EXIT_FAILURE);
     }
+
+    signal(SIGINT, handleSignal);
 
     // Set up the server address structure
     struct sockaddr_in serverAddr;
@@ -136,7 +140,6 @@ int main(void){
         //unlock the mutex
         pthread_mutex_unlock(&clients_mutex);
 
-        //TODO: Create a thread to handle this client
         // Create a thread to handle this client
         pthread_t thread;
         int *clientIndex = malloc(sizeof(int)); // Allocate memory for the client index
@@ -360,4 +363,28 @@ void handleSignal(int sig) {
 
         close(serverSocket);
     }
+}
+
+void cleanupAndExit(void) {
+    printf("Cleaning up resources...\n");
+
+    // Close all client connections
+    pthread_mutex_lock(&clients_mutex);
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (clients[i].active) {
+            close(clients[i].socket);
+            clients[i].active = 0;
+        }
+    }
+    clientCount = 0;
+    pthread_mutex_unlock(&clients_mutex);
+
+    pthread_mutex_destroy(&clients_mutex);
+
+    // Close the server socket
+    if(serverSocket >= 0) {
+        close(serverSocket);
+    }
+
+    printf("Server shutdown complete\n");
 }
