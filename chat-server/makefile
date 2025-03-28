@@ -5,8 +5,8 @@ LDFLAGS = -pthread
 SRC_DIR = src
 OBJ_DIR = obj
 BIN_DIR = bin
-SRCS = $(SRC_DIR)/josh.c
-OBJS = $(OBJ_DIR)/josh.o
+SRCS = $(SRC_DIR)/main.c
+OBJS = $(OBJ_DIR)/main.o
 TARGET = $(BIN_DIR)/chat-server
 
 $(TARGET): $(OBJS)
