@@ -35,55 +35,42 @@ int serverSocket;
 int serverRunning = 1;
 
 // Function prototypes
+int createSeverSocket(int port);
 void* clientHandler(void* arg);
 void broadcastMessage(char *message, int senderIndex);
 void formatAndSendMessage(int receiverSocket, char* senderIP, char* senderName, char* message, char direction);
 void parcelMessage(int receiverSocket, char* senderIP, char* senderName, char* message, char direction);
 void handleSignal(int sig);
 void cleanupAndExit(void);
+void checkForServerShutdown(void);
 
 
 
-int main(void){
-    // Create socket
-    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (serverSocket < 0) {
-        perror("Erro creating socket");
-        exit(EXIT_FAILURE);
+int main(int argc, char* argv[]){
+    int port = PORT;
+
+    if (argc > 1) {
+        port = atoi(argv[1]);
+
+        if (port <= 0 || port > 65535){
+            printf("Usage: %s [port]\n", argv[0]);
+            printf("  port: Optional. Port number to listen on (1-65535). Default: %d\n", PORT);
+            return EXIT_FAILURE;
+        }
     }
-
-    // Set socket options to reuse address
-    int opt =1;
-    if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-        perror("setsockopt failed");
-        close(serverSocket);
-        exit(EXIT_FAILURE);
-    }
-
     signal(SIGINT, handleSignal);
 
-    // Set up the server address structure
-    struct sockaddr_in serverAddr;
-    memset(&serverAddr, 0, sizeof(serverAddr));
-    serverAddr.sin_family =AF_INET;
-    serverAddr.sin_addr.s_addr = INADDR_ANY;
-    serverAddr.sin_port = htons(PORT);
-
-    // Bind the socket 
-    if (bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) {
-        perror("Bind failed");
-        close(serverSocket);
-        exit(EXIT_FAILURE);
+    // Create socket
+    serverSocket = createServerSocket(port);
+    if (serverSocket < 0) {
+        return EXIT_FAILURE;
     }
 
-    // Listen for connections
-    if (listen(serverSocket,MAX_PENDING_CONNECTIONS) < 0) {
-        perror("listen failed");
-        close(serverSocket);
-        exit(EXIT_FAILURE);
-    }
     
-    printf("Server started on port %d\n", PORT);
+
+    
+    
+    printf("Server started on port %d\n", port);
     printf("Listening for connections...\n");
 
     memset(clients, 0, sizeof(clients));
@@ -183,6 +170,48 @@ int main(void){
 
 }
 
+int createServerSocket(int port) {
+    int serverSocket;
+    struct sockaddr_in serverAddr;
+    
+    // Create socket
+    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (serverSocket < 0) {
+        perror("Error creating socket");
+        return -1;
+    }
+
+    // Set socket options to reuse address
+    int opt = 1;
+    if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+        perror("setsockopt failed");
+        close(serverSocket);
+        return -1;
+    }
+
+    // Set up the server address structure
+    memset(&serverAddr, 0, sizeof(serverAddr));
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_addr.s_addr = INADDR_ANY;
+    serverAddr.sin_port = htons(port);
+
+    // Bind the socket 
+    if (bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) {
+        perror("Bind failed");
+        close(serverSocket);
+        return -1;
+    }
+
+    // Listen for connections
+    if (listen(serverSocket, MAX_PENDING_CONNECTIONS) < 0) {
+        perror("Listen failed");
+        close(serverSocket);
+        return -1;
+    }
+    
+    return serverSocket;
+}
+
 void* clientHandler(void* arg) {
     //Extract the client index and free the memory
     int index = *((int*)arg);
@@ -197,7 +226,7 @@ void* clientHandler(void* arg) {
     char clientIP[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &(clients[index].address.sin_addr), clientIP, INET_ADDRSTRLEN);
 
-    printf("Handling client %d with IP \n", index, clientIP);
+    printf("Handling client %d with IP %s \n", index, clientIP);
 
     // First message from client should be the username
     bytesRead = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
@@ -211,6 +240,8 @@ void* clientHandler(void* arg) {
         close(clients[index].socket);
         clients[index].active = 0;
         clientCount --;
+
+        checkForSeverShutdown();
 
         pthread_mutex_unlock(&clients_mutex);
 
@@ -239,7 +270,7 @@ void* clientHandler(void* arg) {
         // NULL- terminate the received data
         buffer[bytesRead]= '\0';
 
-        printf("Received from %s: %S\n", clients[index].username, buffer);
+        printf("Received from %s: %s\n", clients[index].username, buffer);
 
         // Check if client wants to disconnect
         if (strcmp(buffer, ">>bye<<") == 0) {
@@ -268,6 +299,8 @@ void* clientHandler(void* arg) {
     close(clients[index].socket);
     clients[index].active = 0;
     clientCount --;
+
+    checkForSeverShutdown();
 
     pthread_mutex_unlock(&clients_mutex);
 
@@ -329,31 +362,36 @@ void parcelMessage(int receiverSocket, char* senderIP, char* senderName, char* m
 
         // Try to break at a space if possible
         int breakPoint = pos + CHUNK_SIZE;
-        if (breakPoint < messageLen) {
+        
+        // If we're beyond the message length, just use the remaining characters
+        if (breakPoint >= messageLen) {
+            breakPoint = messageLen;
+        } else {
             // Look for a space to break at
             int j = breakPoint;
             while (j > pos && message[j] != ' ') {
-                j --;
+                j--;
             }
             // If we found a space, break there
             if (j > pos) {
                 breakPoint = j + 1; // Include the space in the first chunk
-            } else {
-                breakPoint = messageLen;
             }
-
-            // Copy the chunk
-            chunkSize = breakPoint - pos;
-            if (chunkSize > CHUNK_SIZE) {
-                chunkSize = CHUNK_SIZE; // Ensure we do't exceed CHUNK_SIZE
-            }
-            strncpy(chunk, message + pos, chunkSize);
-            chunk[chunkSize] = '\0';
-
-            formatAndSendMessage(receiverSocket, senderIP, senderName, chunk, direction);
-
-            pos += chunkSize;
         }
+
+        // Copy the chunk
+        chunkSize = breakPoint - pos;
+        if (chunkSize > CHUNK_SIZE) {
+            chunkSize = CHUNK_SIZE; // Ensure we don't exceed CHUNK_SIZE
+        }
+        strncpy(chunk, message + pos, chunkSize);
+        chunk[chunkSize] = '\0';
+
+        // Format and send this chunk
+        formatAndSendMessage(receiverSocket, senderIP, senderName, chunk, direction);
+
+        // Move to the next position
+        pos += chunkSize;
+        
     }
 }
 
@@ -366,7 +404,7 @@ void handleSignal(int sig) {
     }
 }
 
-void checkForSeverShutdown() {
+void checkForServerShutdown(void) {
     if (clientCount == 0) {
         printf("ALL clients disconnected. Shutting down server...\n");
         serverRunning = 0;
@@ -377,7 +415,7 @@ void checkForSeverShutdown() {
             memset(&tempAddr, 0, sizeof(tempAddr));
             tempAddr.sin_family = AF_INET;
             tempAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-            tempAddr.sin_port - htons(PORT);
+            tempAddr.sin_port = htons(PORT);
 
             connect(tempSocket, (struct sockaddr*)&tempAddr, sizeof(tempAddr));
             close(tempSocket);
