@@ -75,4 +75,69 @@ int main(void){
     printf("Server started on port %d\n", PORT);
     printf("Listening for connections...\n");
 
+    memset(clients, 0, sizeof(clients));
+    for (int i = 0; i < MAX_CLIENTS; i++){
+        clients[i].active = 0;
+        clients[i].socket = -1;
+    }
+
+    // TODO: Add main loop to accept connections
+    // Main loop to accept Client connections
+    while(serverRunning) {
+        struct sockaddr_in clientAddr;
+        socklen_t clientLen = sizeof(clientAddr);
+
+        // Accept a new connection
+        int clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddr, &clientLen);
+
+        // Check if accept failed
+        if (clientSocket < 0) {
+            if (serverRunning) {
+                perror("Accept failed");
+            }
+            continue;
+        }
+        
+        printf("New connection attempt received\n");
+
+        //Lock the mutex to safely access the clients array
+        pthread_mutex_lock(&clients_mutex);
+
+        if (clientCount >= MAX_CLIENTS) {
+            printf("Maximum number of clients reached. Connection rejected.\n");
+            // Send rejection to client
+            const char *msg = "Sorry, the chat server is full. Please try again later.\n";
+            send(clientSocket, msg, strlen(msg), 0);
+            close(clientSocket);
+            pthread_mutex_unlock(&clients_mutex);
+            continue;
+        }
+
+        // Find an empty slot in the clients array
+        int i;
+        for (i= 0; i < MAX_CLIENTS; i++) {
+            if (!clients[i].active) {
+                break;
+            }
+        }
+
+        // Add the client to our array
+        clients[i].socket = clientSocket;
+        clients[i].address = clientAddr;
+        clients[i].active =1;
+        clientCount ++; // increment the client count
+
+        //unlock the mutex
+        pthread_mutex_unlock(&clients_mutex);
+
+        //TODO: Create a thread to handle this client
+        printf("New client connected. Total clients: %d\n", clientCount);
+    }
+
+    
+
+    //TODO: Cleanup and exit
+    close(serverSocket);
+    return 0;
+
 }
