@@ -8,6 +8,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <pthread.h>
+#include <signal.h>
+#include <time.h>
 
 #define PORT 8000               // may need to change as my computer is using port 8000, dont know if that affects the virtual machine
 #define MAX_PENDING_CONNECTIONS 10
@@ -34,6 +36,10 @@ int serverRunning = 1;
 
 // Function prototypes
 void* clientHandler(void* arg);
+void broadcastMessage(char *message, int senderIndex);
+void formatAndSendMessage(int receiverSocket, char* senderIP, char* senderName, char* message, char direction);
+void parcelMessage(int receiverSocket, char* senderIP, char* senderName, char* message, char direction);
+
 
 
 int main(void){
@@ -344,5 +350,14 @@ void parcelMessage(int receiverSocket, char* senderIP, char* senderName, char* m
 
             pos += chunkSize;
         }
+    }
+}
+
+void handleSignal(int sig) {
+    if (sig == SIGINT) {
+        printf("\nReceived shutdown signal. Shutting down server...\n");
+        serverRunning = 0;
+
+        close(serverSocket);
     }
 }
