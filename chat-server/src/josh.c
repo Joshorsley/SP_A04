@@ -220,6 +220,9 @@ void* clientHandler(void* arg) {
     printf("Client %d registered with username: %s\n", index, clients[index].username);
 
     //TODO: Announce that a new user has joined
+    char announcement[BUFFER_SIZE];
+    snprintf(announcement, sizeof(announcement), "User %s has joined the chat", clients[index].username);
+    broadcastMessage(announcement, index);
 
     // Main message loop - receive and process messages
     while ((bytesRead = recv(clientSocket, buffer, sizeof(buffer) -1, 0)) > 0) {
@@ -235,6 +238,7 @@ void* clientHandler(void* arg) {
         }
 
         // TODO: Process and broadcast the message
+        broadcastMessage(buffer, index);
     }
 
     if (bytesRead == 0) {
@@ -244,6 +248,8 @@ void* clientHandler(void* arg) {
     }
 
     // TODO: Announce that the user has left
+    snprintf(announcement, sizeof(announcement), "User %s has left the chat", clients[index].username);
+    broadcastMessage(announcement, index);
 
     // Lock the mutex before updating shared data
     pthread_mutex_lock(&clients_mutex);
@@ -258,4 +264,28 @@ void* clientHandler(void* arg) {
     printf("Client %d cleaned up, total clients: %d\n", index, clientCount);
 
     return NULL;
+}
+
+void broadcastMessage(char *message, int senderIndex) {
+    pthread_mutex_lock(&clients_mutex);
+
+    // Get the senders IP address as a string
+    char senderIP[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &(clients[senderIndex].address.sin_addr), senderIP, INET_ADDRSTRLEN);
+
+    printf("Broadcasting message from %s: %s\n", clients[senderIndex].username, message);
+
+    // Send to all connected clients
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (clients[i].active) {
+            // For the sender, use '>>' for others use '<<'
+            char direction = ( i == senderIndex) ? '>' : '<';
+
+            //TODO: Call function to format and send message
+            // For now just echo the raw message
+            send(clients[i].socket, message, strlen(message), 0);
+        }
+    }
+
+    pthread_mutex_unlock(&clients_mutex);
 }
