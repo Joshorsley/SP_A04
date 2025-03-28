@@ -249,23 +249,23 @@ void* clientHandler(void* arg) {
     //NULL -terminate the received data
     buffer[bytesRead] = '\0';
 
-    // if (isUsernameTaken(buffer, index)) {
-    //     printf("Client %d attempted to use taken username: %s\n", index, buffer);
+    if (isUsernameTaken(buffer, index)) {
+        printf("Client %d attempted to use taken username: %s\n", index, buffer);
         
-    //     // Send rejection message to client
-    //     const char *msg = "Sorry, that username is already taken. Please reconnect with a different username.\n";
-    //     send(clientSocket, msg, strlen(msg), 0);
+        // Send rejection message to client
+        const char *msg = "Sorry, that username is already taken. Please reconnect with a different username.\n";
+        send(clientSocket, msg, strlen(msg), 0);
 
-    //     // Clean up and disconnect the client
-    //     pthread_mutex_lock(&clients_mutex);
-    //     close(clients[index].socket);
-    //     clients[index].active = 0;
-    //     clientCount--;
-    //     checkForServerShutdown();
-    //     pthread_mutex_unlock(&clients_mutex);
+        // Clean up and disconnect the client
+        pthread_mutex_lock(&clients_mutex);
+        close(clients[index].socket);
+        clients[index].active = 0;
+        clientCount--;
+        checkForServerShutdown();
+        pthread_mutex_unlock(&clients_mutex);
 
-    //     return NULL;
-    // }
+        return NULL;
+    }
 
     // Store the username 
     pthread_mutex_lock(&clients_mutex);
@@ -463,19 +463,19 @@ void cleanupAndExit(void) {
 }
 
 
-// int isUsernameTaken(char* username, int currentIndex) {
-//     pthread_mutex_lock(&clients_mutex);
+int isUsernameTaken(char* username, int currentIndex) {
+    pthread_mutex_lock(&clients_mutex);
     
-//     for (int i = 0; i < MAX_CLIENTS; i++) {
-//         // Skip checking our own slot
-//         if (i == currentIndex) continue;
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        // Skip checking our own slot
+        if (i == currentIndex) continue;
         
-//         if (clients[i].active && strcmp(clients[i].username, username) == 0) {
-//             pthread_mutex_unlock(&clients_mutex);
-//             return 1; // Username is taken
-//         }
-//     }
+        if (clients[i].active && strcmp(clients[i].username, username) == 0) {
+            pthread_mutex_unlock(&clients_mutex);
+            return 1; // Username is taken
+        }
+    }
     
-//     pthread_mutex_unlock(&clients_mutex);
-//     return 0; // Username is available
-// }
+    pthread_mutex_unlock(&clients_mutex);
+    return 0; // Username is available
+}
