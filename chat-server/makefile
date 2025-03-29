@@ -1,12 +1,20 @@
 CC = gcc
 # Add -Wno-stringop-truncation to suppress the strncpy warning
-CFLAGS = -Wall -Wextra -O2 -Wno-stringop-truncation
+CFLAGS = -Wall -Wextra -O2 -Wno-stringop-truncation -Iinc
 LDFLAGS = -pthread
 SRC_DIR = src
 OBJ_DIR = obj
 BIN_DIR = bin
-SRCS = $(SRC_DIR)/main.c
-OBJS = $(OBJ_DIR)/main.o
+SRCS = $(SRC_DIR)/main.c \
+       $(SRC_DIR)/server.c \
+       $(SRC_DIR)/signals.c \
+       $(SRC_DIR)/client_utils.c
+
+OBJS = $(OBJ_DIR)/main.o \
+       $(OBJ_DIR)/server.o \
+       $(OBJ_DIR)/signals.o \
+       $(OBJ_DIR)/client_utils.o
+
 TARGET = $(BIN_DIR)/chat-server
 
 $(TARGET): $(OBJS)
