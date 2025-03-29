@@ -24,9 +24,11 @@ TARGET = chat-client
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
+	mkdir -p $(BIN_DIR)
 	$(CC) $(CFLAGS) -o $(BIN_DIR)/$@ $^
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Clean

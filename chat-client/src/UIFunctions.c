@@ -42,39 +42,64 @@ bool displayMessage()
 	return true;
 }
 
-WINDOW *createNewWin(int height, int width, int starty, int startx) {
-    WINDOW *local_win;
+void drawWin(WINDOW **inWin, WINDOW **outWin, int *msgRow, int *maxPrintRow)
+{
+    int rows, cols;
+    getmaxyx(stdscr, rows, cols);
+    
+    // color
+    start_color();
+    init_pair(1, COLOR_WHITE, COLOR_MAGENTA);
+    bkgd(COLOR_PAIR(1));
+    
+    *inWin = newwin(3, cols, 0, 0);
+    *outWin = newwin(rows - 3, cols, 3, 0);
+    
+    wbkgd(*inWin, COLOR_PAIR(1));
+    wbkgd(*outWin, COLOR_PAIR(1));
+    
+    mvwprintw(*inWin, 1, 2, "> ");
+    
+    // border
+    mvhline(3, 0, '-', cols); // print '-' on 3rd line
+    const char *label = " Messages ";
+    mvprintw(3, (cols - strlen(label)) / 2, "%s", label); // insert "MESSAGES" in the middle of border
 
-    local_win = newwin(height, width, starty, startx); // Create a new window
-    box(local_win, 0, 0); // Draw a box around the window
-    wrefresh(local_win); // Refresh the window to show changes
-
-    return local_win; // Return the created window
+    getmaxyx(*outWin, *maxPrintRow, cols);
+    *maxPrintRow -= 2;
+    
+    wrefresh(*inWin);
+    wrefresh(*outWin);
+    refresh();
 }
 
-bool byeCheck(char *str) {
-    // Check if the string is "exit" (case insensitive)
-    if (strncasecmp(str, ">>bye<<", 4) == 0) {
-        return true;
-    }
-    return false; // Return false if not "exit"
+void resetInputWin(WINDOW *inWin)
+{
+    werase(inWin);
+    mvwprintw(inWin, 1, 2, "> ");
+    wrefresh(inWin);
 }
 
-void input(WINDOW *Win, char *buf) {
-    mvwgetnstr(Win, 1, 1, buf, 255); // Get user input (max 255 characters)
-    wclear(Win);                     // Clear the input window
-    box(Win, 0, 0);                  // Redraw the border
-    wrefresh(Win);                   // Refresh the window
+void getMsg(WINDOW *inWin, char *buf)
+{
+    resetInputWin(inWin);
+    mvwgetnstr(inWin, 1, 4, buf, 80);
 }
 
-void output(WINDOW *Win, char *buf) {
-    static int outRow = 1; // Start printing from the first row
-    if (outRow >= getmaxy(Win) - 1) { // If outWin is full, scroll
-        scroll(Win);
-        outRow = getmaxy(Win) - 2; // Adjust row after scrolling
-    }
-    mvwprintw(Win, outRow++, 1, "%s", buf); // Print input on the current row
-    wrefresh(Win);                          // Refresh the output window
+void printMsg(WINDOW *outWin, int row, Message msg)
+{
+    char timestamp[10];
+    time_t now = time(NULL);
+    struct tm *t = localtime(&now);
+    strftime(timestamp, sizeof(timestamp), "%H:%M:%S", t);
+    
+    char formattedMsg[100];
+    
+    snprintf(formattedMsg, sizeof(formattedMsg),"%-15s %s >> %-41s (%s)", 
+    msg.ip, msg.username, msg.message, timestamp);
+    
+    mvwprintw(outWin, row, 1, formattedMsg);
+    wrefresh(outWin);
 }
 
 void endProg(WINDOW *inWin, WINDOW *outWin) {

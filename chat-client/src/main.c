@@ -91,8 +91,10 @@ int main(int argc, char* argv[])
 
 	WINDOW* inWin;					// ncurses windows for input 
 	WINDOW* outWin;					// ncurses windows for output
-	UIProps inWinProps;				// UI properties for input window
-	UIProps outWinProps;				// UI properties for output window
+	Message msg;
+    char buf[81];
+    int msgRow = MSG_ROW_START;
+    int maxPrintRow;
 
 	char message[MAX_BUFFER];           // Buffer for user messages
 	static char timestamp[MAX_TIMESTAMP];			// Timestamp for messages
@@ -105,30 +107,17 @@ int main(int argc, char* argv[])
 	printf("Welcome to the Chat - Client Terminal\n");	 // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 
 	// Create UI windows
-	initscr(); // Initialize ncurses
-    refresh(); // Refresh the screen to show changes
+	initscr();
+    cbreak();
+    keypad(stdscr, TRUE);
+    drawWin(&inWin, &outWin, &msgRow, &maxPrintRow);
 
-	// Set properties for input window
-	inWinProps.height = 10; // Height of the input window
-	inWinProps.width = COLS; // Width of the input window
-	inWinProps.starty = 0; // Starting y position of the input window
-	inWinProps.startx = 0; // Starting x position of the input window
-
-	// Set properties for output window
-	outWinProps.height = LINES - inWinProps.height - 1; // Height of the output window
-	outWinProps.width = COLS; // Width of the output window
-	outWinProps.starty = 0; // Starting y position of the output window
-	outWinProps.startx = inWinProps.height + 1; // Starting x position of the output window
-
-	// Create input and output windows
-	inWin = createNewWin(inWinProps.height, inWinProps.width, inWinProps.starty, inWinProps.startx); // Create input window
-	scrollok(inWin, TRUE);
-
-	outWin = createNewWin(outWinProps.height, outWinProps.width, outWinProps.starty, outWinProps.startx); // Create output window
-	scrollok(outWin, TRUE);
+	// create message struct it will be provided by server
+    strcpy(msg.ip, "127.0.0.1");
+    strcpy(msg.username, "SEAN");
 
 	// Start the program with initial functions 
-	if (!programStart(argc, argv))
+	if (!programStart(argc, argv, serverOrIPFlag, socketID))
 	{
 		return -1;
 	}
@@ -139,9 +128,10 @@ int main(int argc, char* argv[])
 	while(programEndFlag)
 	{
 		// Get user input
-		input(inWin, message); // Get user input from the input window
+		getMsg(inWin, buf);
+
 		// Check if the user wants to exit
-		if (byeCheck(message))
+		if (strcmp(buf, ">>bye<<") == 0)
 		{
 			programEndFlag = true; // Set the program end flag to true
 			break; // Exit the loop
@@ -150,7 +140,7 @@ int main(int argc, char* argv[])
 		// Get user input and create message with it  
 		if (strlen(message) > 0)
 		{
-			if(!createMessage(clientIP, programEndFlag))
+			if(!createMessage(message, clientIP, programEndFlag, userID, timestamp, serverOrIPFlag, socketID))
 			{
 				printf("ERROR: Failed to create message.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 				
@@ -158,8 +148,13 @@ int main(int argc, char* argv[])
 			}
 
 			// Display the message in the Output Window.
-			output(outWin, message); // Display the message in the output window
+			strncpy(msg.message, buf, sizeof(msg.message));
+        	printMsg(outWin, msgRow, msg);
 
+			msgRow++;
+			if (msgRow >= maxPrintRow + MSG_ROW_START) { // border(1) + header(1)
+				msgRow = MSG_ROW_START; // reset to first row
+			}
 		}
 
 	}

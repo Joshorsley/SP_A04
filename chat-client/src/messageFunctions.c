@@ -78,7 +78,7 @@ void byeMessage(char message, char* clentIP, bool programEndflag, char userID, c
 }
 
 
-bool createMessage(char message, char* clentIP, bool programEndflag, char userID, char timestamp, char clientIP, int socketID)
+bool createMessage(char* message, char* clentIP, bool programEndflag, char userID, char timestamp, char clientIP, int socketID)
 {
 	// Create a message to send to the server and display in the Output Window
 
