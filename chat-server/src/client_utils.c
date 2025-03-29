@@ -1,6 +1,19 @@
+/*
+* FILE : client_utils.c
+* PROJECT : Can We Talk? System
+* PROGRAMMERS : Josh Horsley, Kalina Cathcart, John Paventi, Daimon Quin, Tony Yang
+* FIRST VERSION : 2025-03-20
+* UPDATED : 2025-03-31
+* DESCRIPTION :
+* FUNCTIONS:
+*/
 #include "client_utils.h"
 #include "server_utils.h"
 
+// FUNCTION :
+// DESCRIPTION : 
+// PARAMETERS :
+// RETURNS :
 void* clientHandler(void* arg) {
     //Extract the client index and free the memory
     int index = *((int*)arg);
@@ -115,6 +128,10 @@ void* clientHandler(void* arg) {
     return NULL;
 }
 
+// FUNCTION :
+// DESCRIPTION : 
+// PARAMETERS :
+// RETURNS :
 void broadcastMessage(char *message, int senderIndex) {
     pthread_mutex_lock(&clients_mutex);
 
@@ -137,6 +154,10 @@ void broadcastMessage(char *message, int senderIndex) {
     pthread_mutex_unlock(&clients_mutex);
 }
 
+// FUNCTION :
+// DESCRIPTION : 
+// PARAMETERS :
+// RETURNS :
 void formatAndSendMessage(int receiverSocket, char* senderIP, char* senderName, char* message, char direction) {
     char formattedMsg[BUFFER_SIZE];
     time_t now;
@@ -156,6 +177,10 @@ void formatAndSendMessage(int receiverSocket, char* senderIP, char* senderName, 
     send(receiverSocket, formattedMsg, strlen(formattedMsg), 0);
 }
 
+// FUNCTION :
+// DESCRIPTION : 
+// PARAMETERS :
+// RETURNS :
 void parcelMessage(int receiverSocket, char* senderIP, char* senderName, char* message, char direction) {
     int messageLen = strlen(message);
     int pos = 0;

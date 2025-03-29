@@ -1,6 +1,19 @@
+/*
+* FILE : server_utils.c
+* PROJECT : Can We Talk? System
+* PROGRAMMERS : Josh Horsley, Kalina Cathcart, John Paventi, Daimon Quin, Tony Yang
+* FIRST VERSION : 2025-03-20
+* UPDATED : 2025-03-31
+* DESCRIPTION :
+* FUNCTIONS:
+*/
 #include "server_utils.h"
 #include "main.h"
 
+// FUNCTION :
+// DESCRIPTION : 
+// PARAMETERS :
+// RETURNS :
 int createServerSocket(int port) {
     int serverSocket;
     struct sockaddr_in serverAddr;
@@ -43,6 +56,10 @@ int createServerSocket(int port) {
     return serverSocket;
 }
 
+// FUNCTION :
+// DESCRIPTION : 
+// PARAMETERS :
+// RETURNS :
 void cleanupAndExit(void) {
     printf("Cleaning up resources...\n");
 
@@ -67,6 +84,10 @@ void cleanupAndExit(void) {
     printf("Server shutdown complete\n");
 }
 
+// FUNCTION :
+// DESCRIPTION : 
+// PARAMETERS :
+// RETURNS :
 void checkForServerShutdown(void) {
     if (clientCount == 0) {
         printf("ALL clients disconnected. Shutting down server...\n");

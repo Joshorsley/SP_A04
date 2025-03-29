@@ -1,3 +1,12 @@
+/*
+* FILE : main.c
+* PROJECT : Can We Talk? System
+* PROGRAMMERS : Josh Horsley, Kalina Cathcart, John Paventi, Daimon Quin, Tony Yang
+* FIRST VERSION : 2025-03-20
+* UPDATED : 2025-03-31
+* DESCRIPTION :
+* FUNCTIONS:
+*/
 #include "server_utils.h"
 #include "client_utils.h"
 #include "signals.h"
