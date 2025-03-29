@@ -7,7 +7,7 @@
 
 
 
-bool programStart(int argc, char* argv[], bool serverOrIPFlag, int socketID)
+bool programStart(int argc, char* argv[], bool serverOrIPFlag, int socketID);
 bool parseArgs(int argc, char* argv[], bool serverOrIPFlag, char userID, char serverName);
 bool resolveServerName(bool serverOrIPFlag, char serverName);
 bool createSocket(int socketID);
