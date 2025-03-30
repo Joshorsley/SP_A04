@@ -36,7 +36,7 @@
 #define MAX_BUFFER 1024 // max buffer size									         **********TODO************ resize this to correct size
 #define MAX_TIMESTAMP 10 // max timestamp size
 #define MAX_IP 16 // max IP address size
-
+#define MSG_ROW_START 1 
 
 
 
@@ -112,9 +112,6 @@ int main(int argc, char* argv[])
     keypad(stdscr, TRUE);
     drawWin(&inWin, &outWin, &msgRow, &maxPrintRow);
 
-	// create message struct it will be provided by server
-    strcpy(msg.ip, "127.0.0.1");
-    strcpy(msg.username, "SEAN");
 
 	// Start the program with initial functions 
 	if (!programStart(argc, argv, serverOrIPFlag, socketID))
@@ -125,7 +122,7 @@ int main(int argc, char* argv[])
 	
 
 	// Loop for User Input 
-	while(programEndFlag)
+	while(!programEndFlag)
 	{
 		// Get user input
 		getMsg(inWin, buf);
@@ -133,7 +130,7 @@ int main(int argc, char* argv[])
 		// Check if the user wants to exit
 		if (strcmp(buf, ">>bye<<") == 0)
 		{
-			programEndFlag = true; // Set the program end flag to true
+		programEndFlag = true; // Set the program end flag to true
 			break; // Exit the loop
 		}
 
