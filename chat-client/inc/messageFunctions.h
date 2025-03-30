@@ -7,13 +7,19 @@
 
 
 
+#ifndef MESSAGE_FUNCTIONS_H
+#define MESSAGE_FUNCTIONS_H
 
-void getTimestamp();
-bool hiMessage(char message, char* clentIP, bool programEndflag, char userID, char timestamp, char clientIP, int socketID);
-void byeMessage(char message, char* clentIP, bool programEndflag, char userID, char timestamp, char clientIP, int socketID);
-bool createMessage(char message, char* clentIP, bool programEndflag, char userID, char timestamp, char clientIP, int socketID);
-bool recieveMessage(char* clientIP, char* userID);
+#include <stdbool.h>
+#include <time.h>
+#include <stdlib.h>
+#include <string.h>
 
+bool hiMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, char* clientIP, int socketID);
+void byeMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, char* clientIP, int socketID);
+bool createMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, char* clientIP, int socketID);
+bool sendMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, char* clientIP, int socketID);
+bool receiveMessage(char* clientIP, char* userID);
 
-
+#endif // MESSAGE_FUNCTIONS_H
 

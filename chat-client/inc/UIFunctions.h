@@ -9,6 +9,12 @@
 #include <ncurses.h>
 #include <time.h>
 
+
+#ifndef UI_FUNCTIONS_H
+#define UI_FUNCTIONS_H
+
+
+
 #define MSG_ROW_START 2
 
 typedef struct {
@@ -27,3 +33,7 @@ void resetInputWin(WINDOW *inWin);
 void getMsg(WINDOW *inWin, char *buf);
 void printMsg(WINDOW *outWin, int row, Message msg);
 void endProg(WINDOW *inWin, WINDOW *outWin);
+
+
+
+#endif // UI_FUNCTIONS_H
