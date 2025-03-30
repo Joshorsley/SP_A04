@@ -3,7 +3,6 @@
  * AUTHORS :    Kalina Cathcart, Josh Horsley, John Paventi, Daimon Quinn, Jiwoo (Tony) Yang
  * DATE :       2025 - 03 -22
  * DESCRIPTION : This file hold the entry point for the chat - client program.
- * 				****** TO DO ********* Finish adding details here for Craig
  */
 
 #include <stdio.h>
@@ -21,7 +20,6 @@
 #include "messageFunctions.h"
 
 
-
 #define PORT 8000 // port number for the server
 
 #define ARG_COUNT 3		// expected arg count
@@ -34,11 +32,83 @@
 
 #define MAX_SNT_MESSAGE 80 // max message length for sent messages 
 #define MAX_RECVD_MESSAGE 40 // max message size for sending/recieving messages
-#define MAX_BUFFER 1024 // max buffer size									         **********TODO************ resize this to correct size
+#define MAX_BUFFER 1024 // max buffer size									      
 #define MAX_TIMESTAMP 10 // max timestamp size
 #define MAX_IP 16 // max IP address size
 #define MSG_ROW_START 1 
 
+
+
+int main(int argc, char* argv[])
+{
+
+	// Variable Declarations: 
+	// program Variables
+	char userID[MAX_USER_ID];			// User ID
+	char serverName[MAX_SERVER_NAME];	// Server Name
+	char serverAddress[MAX_IP];			// Server Address
+	bool serverOrIPFlag = false;		// Flag to note if 3rd arg is server name (true) or an IP address (false)
+	int socketID;						// Socket ID
+	bool programEndFlag = false;            // Flag to end the program, turned true when >>bye<< message is sent
+	// UI Variables
+	WINDOW* inWin;					// ncurses windows for input 
+	WINDOW* outWin;					// ncurses windows for output
+	Message msg;
+	char buf[81];
+	int msgRow = MSG_ROW_START;
+	int maxPrintRow;
+	// message variables 
+	char message[MAX_BUFFER];           // Buffer for user messages
+	static char timestamp[MAX_TIMESTAMP];			// Timestamp for messages
+	char clientIP[MAX_IP];					// Client IP address for messages 
+
+
+
+	printf("========================================\n");	 // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+	printf("Welcome to the Chat - Client Terminal\n");	 // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+
+
+	// Start the program with initial functions 
+	if (!programStart(argc, argv[], serverOrIPFlag, socketID, serverName, userID, clientIP, serverAddress, timestamp, message, programEndFlag))
+	{
+		printf("ERROR: Failed to start the program.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+		return -1;
+	}
+
+
+
+	// Loop for User Input 
+	while (programEndFlag == false)
+	{
+
+		// ************************************TODO************ Stop the input at 80 characters and do not allow the user to enter more characters / do not notify the user of the limit
+		// 
+	// Create a message to send to the server and display in the Output Window:
+		// the user should be allowed to enter a message of up to 80 characters.
+				// When the user hits the 80 character input boundary – the UI must stop accepting characters for input with no other notification to the user.
+		// if a message is received when the user is typing another message, it MUST not interrupt the message being currently composed
+
+
+		// Check: If a message is entered, create the message and send it to the server (create message will determine if a bye message is needed instead) 
+		if (strlen(message) > 0)
+		{
+
+			if (!createMessage(message, clientIP, programEndFlag, userID, timestamp, serverOrIPFlag, socketID))
+			{
+				printf("ERROR: Failed to create message.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+
+				return -1;
+			}
+
+
+		}
+
+	}
+
+	programEnd(socketID, inWin, outWin); // end the program
+	return 0;
+
+}
 
 
 
@@ -79,91 +149,4 @@ Notes :
 
 
 */
-
-
-int main(int argc, char* argv[])
-{
-
-	// Variable Declarations: 
-	// program Variables
-	char userID[MAX_USER_ID];			// User ID
-	char serverName[MAX_SERVER_NAME];	// Server Name
-	char serverAddress[MAX_IP];			// Server Address
-	bool serverOrIPFlag = false;		// Flag to note if 3rd arg is server name (true) or an IP address (false)
-	int socketID;						// Socket ID
-	bool programEndFlag = false;            // Flag to end the program, turned true when >>bye<< message is sent
-	// UI Variables
-	WINDOW* inWin;					// ncurses windows for input 
-	WINDOW* outWin;					// ncurses windows for output
-	Message msg;
-    	char buf[81];
-    	int msgRow = MSG_ROW_START;
-    	int maxPrintRow;
-	// message variables 
-	char message[MAX_BUFFER];           // Buffer for user messages
-	static char timestamp[MAX_TIMESTAMP];			// Timestamp for messages
-	char clientIP[MAX_IP];					// Client IP address for messages 
-	
-
-
-	printf("========================================\n");	 // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
-	printf("Welcome to the Chat - Client Terminal\n");	 // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
-
-	// Create UI windows
-    /*
-     __
- .--()°'./
-'|, . ,'        NCurses  here? or in programStart()?
- !_-(_\
-
-    */
-
-	// Start the program with initial functions 
-	if (!programStart(argc, argv, serverOrIPFlag, socketID, serverName, userID, clientIP, serverAddress, timestamp, message, programEndFlag))
-	{
-		return -1;
-	}
-
-	
-
-	// Loop for User Input 
-	while(programEndFlag == false)
-	{
-		// Get user input
-		getMsg(inWin, buf);
-
-		// Check if the user wants to exit
-		if (strcmp(buf, ">>bye<<") == 0)
-		{
-		programEndFlag = true; // Set the program end flag to true
-			break; // Exit the loop
-		}
-
-		// Get user input and create message with it  
-		if (strlen(message) > 0)
-		{
-			if(!createMessage(message, clientIP, programEndFlag, userID, timestamp, socketID))
-			{
-				printf("ERROR: Failed to create message.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
-				
-				return -1; 
-			}
-
-			// Display the message in the Output Window.
-			strncpy(msg.message, buf, sizeof(msg.message));
-        		printMsg(outWin, msgRow, msg);
-
-			msgRow++;
-			if (msgRow >= maxPrintRow + MSG_ROW_START) { // border(1) + header(1)
-				msgRow = MSG_ROW_START; // reset to first row
-			}
-		}
-	}
-
-	programEnd(socketID, inWin, outWin); // end the program
-	return 0; 
-
-}
-
-
 

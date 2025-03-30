@@ -2,7 +2,7 @@
  * PROJECT :    SP A4 : Can We Talk System
  * AUTHORS :
  * DATE :       2025 - 03 -22
- * DESCRIPTION : This file holds the functions related to creating, sending and recieving messages. 
+ * DESCRIPTION : This file holds the functions related to creating, sending and recieving messages.
  */
 
 
@@ -28,11 +28,11 @@
 #define MSG_ROW_START 1 
 
 
-/*
-* FUNCTION:             getTimestamp
-* DESCRIPTION:      This function gets the current time and stores it in the timestamp variable
-*/
-void getTimestamp(char* timestamp) 
+ /*
+ * FUNCTION:             getTimestamp
+ * DESCRIPTION:      This function gets the current time and stores it in the timestamp variable
+ */
+void getTimestamp(char* timestamp)
 {
     time_t currentTime;
     time(&currentTime);
@@ -44,12 +44,12 @@ void getTimestamp(char* timestamp)
 
 
 /*
-* FUNCTION:             
+* FUNCTION:
 * DESCRIPTION:    This function sends a message to the server to establish the connection and start communication
-*                   This message is not displayed in the output window  
+*                   This message is not displayed in the output window
 */
 
-bool hiMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, char* clientIP, int socketID) 
+bool hiMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID)
 {
     // Send initial message to the server (Say >>Hi<< to the server)
     // send the message to the server using send() **********TODO**********  add the IP address of the client to the beginning of the message
@@ -60,7 +60,7 @@ bool hiMessage(char* message, char* clientIP, bool programEndFlag, char* userID,
     strcpy(message, ">>Hi<< Server, lets connect.");
 
     // Send the message to the server
-    if (!sendMessage(message, clientIP, userID, timestamp, programEndFlag, socketID)) 
+    if (!sendMessage(message, clientIP, userID, timestamp, programEndFlag, socketID))
     {
         printf("ERROR: >>Hi<< Message to Server failed to send");
         return false;
@@ -83,7 +83,7 @@ bool hiMessage(char* message, char* clientIP, bool programEndFlag, char* userID,
 *               This message is not displayed in the output window
 */
 
-void byeMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, char* clientIP, int socketID) 
+void byeMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID)
 {
     // Send a message to the server to close the connection and exit the program
     // send the message to the server using send() **********TODO**********  add the IP address of the client to the beginning of the message
@@ -93,7 +93,7 @@ void byeMessage(char* message, char* clientIP, bool programEndFlag, char* userID
     // Get the current time stamp
     getTimestamp(timestamp);
 
-    if (!sendMessage(message, clientIP, userID, timestamp, programEndFlag, socketID)) 
+    if (!sendMessage(message, clientIP, userID, timestamp, programEndFlag, socketID))
     {
         return false;
     }
@@ -101,7 +101,7 @@ void byeMessage(char* message, char* clientIP, bool programEndFlag, char* userID
     // DO NOT DISPLAY THIS MESSAGE IN THE OUTPUT WINDOW ************************************DELETE BEFORE SUBMISSION
 
     // Begin the process to close the connection and exit the program
-    endProgramFlag = true;
+    programEndFlag = true;
     return true;
 }
 
@@ -112,35 +112,31 @@ void byeMessage(char* message, char* clientIP, bool programEndFlag, char* userID
 /*
 * FUNCTION:
 * DESCRIPTION: This function takes the user's input and creates a message to send to the server.
-*               The message is displayed in the output window
+*               If the message is formatted as >>bye<<, the byeMessage function is called to close the connection and exit the program and the rest of the createMessage function is skipped
+*               The message is then sent to the server and if it is not a >>bye<< message, it will be displayed in the output window
+* 			
 */
 
-bool createMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, char* clientIP, int socketID) 
+bool createMessage(char* message,char* messageContent, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID)
 {
-    // Create a message to send to the server and display in the Output Window
 
-    // the user should be allowed to enter a message of up to 80 characters.
-    // When the user hits the 80 character input boundary – the UI must stop accepting characters for input with no other notification to the user.
-
-    // if a message is received when the user is typing another message, it MUST not interrupt the message being currently composed
 
     // Get the current time stamp
     getTimestamp(timestamp);
 
     // Get user input (up to 80 characters)
-    char messageContent[MAX_SNT_MESSAGE + 1] = { 0 };
-    wgetnstr(input_win, messageContent, MAX_SNT_MESSAGE); // **********************************TODO**********************************  check if this is the correct function to use for ncurses input
+	message = messageContent;
 
     // Skip if message area was empty 
-    if (strlen(messageContent) == 0) 
+    if (strlen(message) == 0)
     {
         return false;
     }
 
     // if user enters the >>bye<< message, send the shutdown message to the server and close the connection
-    if (strcmp(messageContent, ">>bye<<") == 0) 
+    if (strcmp(message, ">>bye<<") == 0)
     {
-        if (!byeMessage(message, clientIP, userID, timestamp, programEndFlag, socketID)) 
+        if (!byeMessage(message, clientIP, userID, timestamp, programEndFlag, socketID))
         {
             return false;
         }
@@ -150,7 +146,7 @@ bool createMessage(char* message, char* clientIP, bool programEndFlag, char* use
         return true;
     }
 
-    if (!sendMessage(message, clientIP, userID, timestamp, programEndFlag, socketID)) 
+    if (!sendMessage(message, clientIP, userID, timestamp, programEndFlag, socketID))
     {
         return false;
     }
@@ -175,11 +171,11 @@ bool createMessage(char* message, char* clientIP, bool programEndFlag, char* use
 
 /*
 * FUNCTION:
-* DESCRIPTION: this function prepares the message format and sends the hi, bye or user message to the server. 
+* DESCRIPTION: this function prepares the message format and sends the hi, bye or user message to the server.
 *   	        The message is displayed in the output window
 * 			   The function will return true if the message is successfully sent, and false otherwise
 */
-bool sendMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, char* clientIP, int socketID) 
+bool sendMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID)
 {
     // Format message with necessary information
     snprintf(message, MAX_BUFFER,
@@ -189,11 +185,13 @@ bool sendMessage(char* message, char* clientIP, bool programEndFlag, char* userI
         message,                       // Positions 28-67: up to 80 char message
         timestamp);                    // Positions 69-78: timestamp in brackets (HH:MM:SS)
 
-    if (send(socketID, message, strlen(message), 0) == -1) 
+    if (send(socketID, message, strlen(message), 0) == -1)
     {
         printf("ERROR: Failed to send message to server.\n");
         return false;
     }
+
+	printf("Message sent to server: %s\n", message); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 
     return true;
 }
@@ -208,7 +206,7 @@ bool sendMessage(char* message, char* clientIP, bool programEndFlag, char* userI
 * 			 The function will return true if the message is successfully received, and false otherwise
 *                 ************************************************************************************************************ TO DO ********** This function needs to be finished and tested
 */
-bool receiveMessage(char* clientIP, char* userID) 
+bool receiveMessage(char* clientIP, char* userID)
 {
     // Receive a message from the server 
     char* buffer = (char*)calloc(MAX_BUFFER, sizeof(char));
@@ -222,6 +220,8 @@ bool receiveMessage(char* clientIP, char* userID)
     // if a message is received when the user is typing another message, it MUST not interrupt the message being currently composed
     // Each message being received within a client needs to contain the sending client’s IP address - compare to ensure right client message 
     // Each message being received within a client needs to contain the sending client’s user-name (up to 5 characters) - compare to ensure right client message
+
+	printf("Message received from server: %s\n", buffer); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 
     return true;
 }
