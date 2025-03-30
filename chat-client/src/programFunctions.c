@@ -10,16 +10,8 @@
 #include "programFunctions.h"
 #include "UIFunctions.h"
 #include "messageFunctions.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
-#include <ncurses.h>
-#include <unistd.h>
-#include <time.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <pthread.h>
+#include "main.h"
+
 
 
 #define PORT 8000 // port number for the server
@@ -123,7 +115,7 @@ bool programStart(int argc, char* argv[], bool serverOrIPFlag, int socketID, cha
 }
 
 
-
+//GOOD
 // Function to parse the arguments passed to the program
 bool parseArgs(int argc, char* argv[], bool serverOrIPFlag, char userID, char serverName)
 {
@@ -145,6 +137,7 @@ bool parseArgs(int argc, char* argv[], bool serverOrIPFlag, char userID, char se
 			char userArg = argv[i] + ARG1_SKIP; // Skip the "-user" part of the argument
 			strncpy(userID, userArg, MAX_USER_ID);
 			userID[MAX_USER_ID] = '\0';
+
 		}
 		else if (strncmp(argv[i], "-server", ARG2_SKIP) == 0)	// Check Server Arg for name or IP address 
 		{
@@ -179,9 +172,9 @@ bool parseArgs(int argc, char* argv[], bool serverOrIPFlag, char userID, char se
 }
 
 
-
+//MEH - might need the ip validation check
 // Validates the server arg to check if it's an IP address or a server name
-bool IPCheck(char* serverName)
+bool IPCheck(const char* serverName)
 {
 	// Check : Is it a name or IP address?
 	int periodCount = 0;
@@ -208,6 +201,13 @@ bool IPCheck(char* serverName)
 
 
 	return true;
+}
+//REWRITE OF ABOVE
+bool isAddress(const char* serverName)
+{
+	struct sockaddr_in sa;
+	int result = inet_pton(AF_INET, serverName, &(sa.sin_addr));
+	return result != 0;
 }
 
 
@@ -257,7 +257,7 @@ bool resolveServerName(bool serverOrIPFlag, char serverName)
 bool createSocket(int socketID)
 {
 
-	socketID = socket(AF_INET, SOCK_STREAM, 0); // create socket
+	
 
 	if (socketID == -1)
 	{
@@ -268,17 +268,7 @@ bool createSocket(int socketID)
 	// Set up the server address structure
 	struct sockaddr_in serv_addr;
 
-	// Zero out the structure preventing garbage values 
-	memset(&serv_addr, 0, sizeof(serv_addr));
-
-	// Set the server address family to IPv4
-	serv_addr.sin_family = AF_INET;
-
-	// set server IP address
-	serv_addr.sin_addr.s_addr = inet_addr(serverAddress);
-
-	// set up the port number
-	serv_addr.sin_port = htons(PORT);	
+	
 
 	return true; 
 
@@ -298,6 +288,60 @@ bool connectToServer(int socketID)
 
 	return true;
 
+}
+// REWROTE AND COMBINED THE TWO ABOVE FUNCTIONS TO NOW CREATE SOCKET AND CONNECT
+//REWRITE OF ABOVE
+int connectToServer_(const char *serverName) 
+{
+    int socketID;
+    struct sockaddr_in server_addr;
+    char serverIP[MAX_IP] = {0};
+    
+    // Create socket
+    socketID = socket(AF_INET, SOCK_STREAM, 0); // create socket
+    if (socketID < 0) 
+	{
+        perror("Error: could not create socket");
+        return -1;
+    }
+    
+   	// Zero out the structure preventing garbage values 
+	memset(&serv_addr, 0, sizeof(serv_addr));
+
+	// Set the server address family to IPv4
+	serv_addr.sin_family = AF_INET;
+
+	// set server IP address
+	serv_addr.sin_addr.s_addr = inet_addr(serverAddress);
+
+	// set up the port number
+	serv_addr.sin_port = htons(PORT);	
+    
+    // Check if serverName is an IP address or hostname
+    if (isIPAddress(serverName)) 
+	{
+        server_addr.sin_addr.s_addr = inet_addr(serverName);
+    } 
+	else 
+	{
+        if (!resolveHostname(serverName, serverIP, sizeof(serverIP))) 
+		{
+            printf("Error: Failed to resolve hostname: %s\n", serverName);
+            close(sockfd);
+            return -1;
+        }
+        server_addr.sin_addr.s_addr = inet_addr(serverIP);
+    }
+    
+    // Connect to the server
+    if (connect(socketID, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) 
+	{
+        perror("Error: Connect failed");
+        close(socketID);
+        return -1;
+    }
+    
+    return socketID;
 }
 
 /*

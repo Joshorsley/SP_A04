@@ -10,7 +10,7 @@
 #include "programFunctions.h"
 #include "messageFunctions.h"
 #include "UIFunctions.h"
-
+#include "main.h"
 
 #define MAX_BUFFER 1024 // max buffer size	
 

@@ -29,7 +29,7 @@ typedef struct {
     int active;                     // Flag to show client slot is active
 } clientInfo;
 
-// Global variables declarations (defined in main.c)
+// Global variables, I know, I know but it is hinted at in the documentation, needs to be accessible by all threads
 extern clientInfo clients[MAX_CLIENTS];
 extern pthread_mutex_t clients_mutex;
 extern int clientCount;
