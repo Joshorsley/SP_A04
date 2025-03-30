@@ -1,8 +1,9 @@
 /* FILE :       main.c
  * PROJECT :    SP A4 : Can We Talk System
- * AUTHORS :    The scooby gang
+ * AUTHORS :    Kalina Cathcart, Josh Horsley, John Paventi, Daimon Quinn, Jiwoo (Tony) Yang
  * DATE :       2025 - 03 -22
  * DESCRIPTION : This file hold the entry point for the chat - client program.
+ * 				****** TO DO ********* Finish adding details here for Craig
  */
 
 #include <stdio.h>
@@ -83,38 +84,42 @@ Notes :
 int main(int argc, char* argv[])
 {
 
+	// Variable Declarations: 
+	// program Variables
 	char userID[MAX_USER_ID];			// User ID
 	char serverName[MAX_SERVER_NAME];	// Server Name
 	char serverAddress[MAX_IP];			// Server Address
 	bool serverOrIPFlag = false;		// Flag to note if 3rd arg is server name (true) or an IP address (false)
 	int socketID;						// Socket ID
-
+	bool programEndFlag = false;            // Flag to end the program, turned true when >>bye<< message is sent
+	// UI Variables
 	WINDOW* inWin;					// ncurses windows for input 
 	WINDOW* outWin;					// ncurses windows for output
 	Message msg;
-    char buf[81];
-    int msgRow = MSG_ROW_START;
-    int maxPrintRow;
-
+    	char buf[81];
+    	int msgRow = MSG_ROW_START;
+    	int maxPrintRow;
+	// message variables 
 	char message[MAX_BUFFER];           // Buffer for user messages
 	static char timestamp[MAX_TIMESTAMP];			// Timestamp for messages
 	char clientIP[MAX_IP];					// Client IP address for messages 
 	
-	bool programEndFlag = false;		// Flag to end the program, turned true when >>bye<< message is sent
 
 
 	printf("========================================\n");	 // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 	printf("Welcome to the Chat - Client Terminal\n");	 // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 
 	// Create UI windows
-	initscr();
-    cbreak();
-    keypad(stdscr, TRUE);
-    drawWin(&inWin, &outWin, &msgRow, &maxPrintRow);
+    /*
+     __
+ .--()°'./
+'|, . ,'        NCurses  here? or in programStart()?
+ !_-(_\
 
+    */
 
 	// Start the program with initial functions 
-	if (!programStart(argc, argv, serverOrIPFlag, socketID))
+	if (!programStart(argc, argv, serverOrIPFlag, socketID, serverName, userID, clientIP, serverAddress, timestamp, message, programEndFlag))
 	{
 		return -1;
 	}
@@ -122,7 +127,7 @@ int main(int argc, char* argv[])
 	
 
 	// Loop for User Input 
-	while(!programEndFlag)
+	while(programEndFlag == false)
 	{
 		// Get user input
 		getMsg(inWin, buf);
@@ -137,7 +142,7 @@ int main(int argc, char* argv[])
 		// Get user input and create message with it  
 		if (strlen(message) > 0)
 		{
-			if(!createMessage(message, clientIP, programEndFlag, userID, timestamp, serverOrIPFlag, socketID))
+			if(!createMessage(message, clientIP, programEndFlag, userID, timestamp, socketID))
 			{
 				printf("ERROR: Failed to create message.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 				
@@ -146,14 +151,13 @@ int main(int argc, char* argv[])
 
 			// Display the message in the Output Window.
 			strncpy(msg.message, buf, sizeof(msg.message));
-        	printMsg(outWin, msgRow, msg);
+        		printMsg(outWin, msgRow, msg);
 
 			msgRow++;
 			if (msgRow >= maxPrintRow + MSG_ROW_START) { // border(1) + header(1)
 				msgRow = MSG_ROW_START; // reset to first row
 			}
 		}
-
 	}
 
 	programEnd(socketID, inWin, outWin); // end the program

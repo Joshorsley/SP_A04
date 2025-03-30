@@ -1,8 +1,8 @@
-/* FILE :       
+/* FILE :       programFunctions.c
  * PROJECT :    SP A4 : Can We Talk System
  * AUTHORS :    
  * DATE :       2025 - 03 -22
- * DESCRIPTION : This file holds
+ * DESCRIPTION : This file holds the functions that handle beginning the program and initializing the connection with the server. 
  */
 
 #include "programFunctions.h"
@@ -19,28 +19,53 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
-#define PORT 8000 // port number for the server
+#define PORT 8000 		// port number for the server
+#define ARG_COUNT 3		// expected arg count
+#define MAX_USER_ID 5		// max user ID length
+#define MAX_SERVER_NAME 255 	// max server name length
+#define ARG1_SKIP 5 		// skip the first 5 characters of the argument
+#define ARG2_SKIP 7 		// skip the first 7 characters of the argument
+#define IP_DOT_COUNT 3 		// number of periods in an IP address
+#define MAX_IP 16 		// max IP address size
 
-bool programStart(int argc, char* argv[], bool* serverOrIPFlag, int* socketID, char* serverName) 
+
+
+/*
+* FUNCTION:         programStart
+* DESCRIPTION:      This function starts the program by doing the following: 
+                        1) parses the  userID and serverAddress or serverName variables from the arguments given in the command line 
+                        2) If a name was given for the server instead of an IP address, the program resolves the server name to an IP address
+                        3) creates a socket
+		       	4) connects to the server using the socket and found or given 1P address for the server
+                        5) initializes the ncurses library
+			6) Uses Ncurses to initialize input and output windows                                                                          **********TODO************  Update when ncurses and thread functionality complete in case of changes 
+			7) Creates 2 threads, one to handle incoming messages, one to handle outgoing messages
+                        8) gets the client IP address to add to the messages
+                        9) sends the initial >>hi<< message to the server
+		    When the functionality is complete, it will return true if all steps are successful, false otherwise. 
+                    It will go back to main to continue to the chat loop if successful, or end the program if unsuccessful.
+*/
+bool programStart(int argc, char* argv[], bool serverOrIPFlag, int socketID, char* serverName, char* userID, char* clientIP, char* serverAddress, char* timestamp, char* message, bool programEndFlag) 
 {
     // Parse Arguments into variables for the program 
-    if (!parseArgs(argc, argv, serverOrIPFlag, userID, serverName)) 
+    if (!parseArgs(argc, argv, serverOrIPFlag, userID, serverName, serverAddress)) 
     {
         printf("ERROR: Failed to parse arguments.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
         return false;
     }
 
-    // Resolve the server name to an IP address
-    if (*serverOrIPFlag == true) {
+    // Check: If the server or IP flag is true, then it is a server name and needs to be resolved to find the address
+    if (*serverOrIPFlag == true) 
+    {
         // Resolve the server name to an IP address
-        if (!resolveServerName(serverOrIPFlag, serverName)) 
+        if (!resolveServerName(serverOrIPFlag, serverName, serverAddress)) 
         {
             printf("ERROR: Failed to resolve server name.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
             return false;
         }
     }
 
-    // Create socket
+    // Create socket with the found or given server IP address
     if (!createSocket(socketID)) 
     {
         printf("ERROR: Failed to create socket.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
@@ -48,8 +73,7 @@ bool programStart(int argc, char* argv[], bool* serverOrIPFlag, int* socketID, c
     }
 
     // Connect to the server
-    struct sockaddr_in serv_addr;
-    if (!connectToServer(*socketID, &serv_addr)) 
+    if (!connectToServer(socketID, serverAddress)) 
     {
         printf("ERROR: Failed to connect to server.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
         return false;
@@ -58,7 +82,7 @@ bool programStart(int argc, char* argv[], bool* serverOrIPFlag, int* socketID, c
     // Initialize the ncurses library 
     /*
  __
-.--()°'.'
+.--()°'./
 '|, . ,'        NCurses Be needed here
  !_-(_\
 
@@ -67,7 +91,7 @@ bool programStart(int argc, char* argv[], bool* serverOrIPFlag, int* socketID, c
     // Create input window for typing messages 
     /*
  __
-.--()°'.'
+.--()°'./
 '|, . ,'        NCurses Be needed here
  !_-(_\
 
@@ -76,15 +100,16 @@ bool programStart(int argc, char* argv[], bool* serverOrIPFlag, int* socketID, c
     // Create output window for displaying messages
     /*
  __
-.--()°'.'
+.--()°'./
 '|, . ,'        NCurses Be needed here
  !_-(_\
 
     */
 
     // Create a thread to handle incoming messages
-    incomingThreadCreate();
-    outgoingThreadCreate();
+    //
+    //
+    //
 
     // Get the client IP address 
     if (!getClientIP(clientIP)) 
@@ -94,7 +119,7 @@ bool programStart(int argc, char* argv[], bool* serverOrIPFlag, int* socketID, c
     }
 
     // Send initial message to the server (Say >>Hi<< to the server) 
-    if (!hiMessage(clientIP)) 
+    if (!hiMessage(message, clientIP, programEndFlag, userID, timestamp, socketID)) 
     {
         printf("ERROR: Failed to send >>Hi<< message to server.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
         return false;
@@ -105,8 +130,17 @@ bool programStart(int argc, char* argv[], bool* serverOrIPFlag, int* socketID, c
     return true;
 }
 
-// Function to parse the arguments passed to the program
-bool parseArgs(int argc, char* argv[], bool* serverOrIPFlag, char* userID, char* serverName) 
+
+
+
+
+/*
+* FUNCTION:             parseArgs
+* DESCRIPTION:          This function parses the arguments passed to the program and stores the user ID and the server name or server address in their variables.
+						It also sets the serverOrIPFlag to true if the server name was given, and false if the server address was given.
+						It returns true if the arguments are successfully parsed, and false otherwise.
+*/
+bool parseArgs(int argc, char* argv[], bool serverOrIPFlag, char* userID, char* serverName, char* serverAddress) 
 {
     if (argc != ARG_COUNT) 
     {
@@ -152,7 +186,14 @@ bool parseArgs(int argc, char* argv[], bool* serverOrIPFlag, char* userID, char*
     return true;
 }
 
-// Validates the server arg to check if it's an IP address or a server name
+
+
+
+/*
+* FUNCTION:             IPCheck
+* DESCRIPTION:      This function validates the server arg to check if it's an IP address or a server name.
+* 
+*/
 bool IPCheck(char* serverName, bool* serverOrIPFlag) 
 {
     // Check : Is it a name or IP address?
@@ -224,8 +265,11 @@ bool resolveServerName(bool* serverOrIPFlag, char* serverName, char* serverAddre
 }
 
 
-
-bool createSocket(int* socketID) 
+/*
+ * FUNCTION : createSocket
+ * DESCRIPTION : creates socket for program to use 
+ */
+bool createSocket(int socketID) 
 {
     *socketID = socket(AF_INET, SOCK_STREAM, 0); // create socket
 
@@ -241,12 +285,34 @@ bool createSocket(int* socketID)
 
 
 
-bool connectToServer(int socketID, struct sockaddr_in* serv_addr) 
+
+/*
+* FUNCTION:             connectToServer
+* DESCRIPTION:      This function connects the client to the server using the socket and server address.
+* 
+*/
+bool connectToServer(int socketID, char* serverAddress) 
 {
-    // Connect to the server using the socket struct created in createSocket()
-    if (connect(socketID, (struct sockaddr*)serv_addr, sizeof(*serv_addr)) == -1) 
+    struct sockaddr_in serv_addr;
+
+    // Configure the server address structure
+    memset(&serv_addr, 0, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(PORT);  
+
+    // Convert IP address from string to binary form
+    if (inet_pton(AF_INET, serverAddress, &serv_addr.sin_addr) <= 0) 
     {
-        printf("ERROR: Failed to connect to server.\n");
+        printf("ERROR: Invalid address / Address not supported\n");
+        close(socketID);
+        return false;
+    }
+
+    // Connect to server
+    if (connect(socketID, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) 
+    {
+        printf("ERROR: Failed to connect to server\n");
+        close(socketID);
         return false;
     }
 
@@ -289,7 +355,11 @@ bool getClientIP(char* clientIP)
 
 
 
-
+/*
+ * FUNCTION:    programEnd
+ * DESCRIPTION: ends the program gracefully, ensuring all components are closed properly 
+ *
+ */
 
 void programEnd(int socketID, WINDOW* inWin, WINDOW* outWin) 
 {
@@ -303,24 +373,6 @@ void programEnd(int socketID, WINDOW* inWin, WINDOW* outWin)
     printf("Chat - Client is now closing, Goodbye!\n");
     printf("========================================\n");
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

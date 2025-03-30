@@ -1,8 +1,8 @@
-/* FILE :
+/* FILE :       messageFunctions.c
  * PROJECT :    SP A4 : Can We Talk System
  * AUTHORS :
  * DATE :       2025 - 03 -22
- * DESCRIPTION : This file holds
+ * DESCRIPTION : This file holds the functions related to creating, sending and recieving messages. 
  */
 
 
@@ -19,6 +19,19 @@
 #define MAX_BUFFER 1024 // max buffer size
 #define MAX_SNT_MESSAGE 80 // max message length for sent messages
 
+
+#define MAX_SNT_MESSAGE 80 // max message length for sent messages 
+#define MAX_RECVD_MESSAGE 40 // max message size for sending/recieving messages
+#define MAX_BUFFER 1024 // max buffer size									         **********TODO************ resize this to correct size
+#define MAX_TIMESTAMP 10 // max timestamp size
+#define MAX_IP 16 // max IP address size
+#define MSG_ROW_START 1 
+
+
+/*
+* FUNCTION:             getTimestamp
+* DESCRIPTION:      This function gets the current time and stores it in the timestamp variable
+*/
 void getTimestamp(char* timestamp) 
 {
     time_t currentTime;
@@ -26,6 +39,15 @@ void getTimestamp(char* timestamp)
     struct tm* timeInfo = localtime(&currentTime);
     strftime(timestamp, MAX_TIMESTAMP, "%H:%M:%S", timeInfo);
 }
+
+
+
+
+/*
+* FUNCTION:             
+* DESCRIPTION:    This function sends a message to the server to establish the connection and start communication
+*                   This message is not displayed in the output window  
+*/
 
 bool hiMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, char* clientIP, int socketID) 
 {
@@ -49,6 +71,18 @@ bool hiMessage(char* message, char* clientIP, bool programEndFlag, char* userID,
     return true;
 }
 
+
+
+
+
+
+
+/*
+* FUNCTION:     byeMessage
+* DESCRIPTION:  This function sends a message to the server to close the connection and exit the program
+*               This message is not displayed in the output window
+*/
+
 void byeMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, char* clientIP, int socketID) 
 {
     // Send a message to the server to close the connection and exit the program
@@ -70,6 +104,16 @@ void byeMessage(char* message, char* clientIP, bool programEndFlag, char* userID
     endProgramFlag = true;
     return true;
 }
+
+
+
+
+
+/*
+* FUNCTION:
+* DESCRIPTION: This function takes the user's input and creates a message to send to the server.
+*               The message is displayed in the output window
+*/
 
 bool createMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, char* clientIP, int socketID) 
 {
@@ -116,7 +160,7 @@ bool createMessage(char* message, char* clientIP, bool programEndFlag, char* use
     // Clear input window for next message
     /*
      __
- .--()°'.'
+ .--()°'./
 '|, . ,'        NCurses Be needed here
  !_-(_\
 
@@ -125,6 +169,16 @@ bool createMessage(char* message, char* clientIP, bool programEndFlag, char* use
     return true;
 }
 
+
+
+
+
+/*
+* FUNCTION:
+* DESCRIPTION: this function prepares the message format and sends the hi, bye or user message to the server. 
+*   	        The message is displayed in the output window
+* 			   The function will return true if the message is successfully sent, and false otherwise
+*/
 bool sendMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, char* clientIP, int socketID) 
 {
     // Format message with necessary information
@@ -144,6 +198,16 @@ bool sendMessage(char* message, char* clientIP, bool programEndFlag, char* userI
     return true;
 }
 
+
+
+
+
+/*
+* FUNCTION:
+* DESCRIPTION: This function recieves the message from the server and displays it in the incoming messages window
+* 			 The function will return true if the message is successfully received, and false otherwise
+*                 ************************************************************************************************************ TO DO ********** This function needs to be finished and tested
+*/
 bool receiveMessage(char* clientIP, char* userID) 
 {
     // Receive a message from the server 
