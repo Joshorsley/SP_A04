@@ -117,9 +117,10 @@ bool programStart(int argc, char* argv[], bool serverOrIPFlag, int socketID, cha
 
 //GOOD
 // Function to parse the arguments passed to the program
-bool parseArgs(int argc, char* argv[], bool serverOrIPFlag, char userID, char serverName)
+bool parseArgs(int argc, char* argv[], char* userID, char* serverName)
 {
-
+	bool userExists = false;
+	bool serverExists = false;
 
 	if (argc != ARG_COUNT)
 	{
@@ -128,46 +129,39 @@ bool parseArgs(int argc, char* argv[], bool serverOrIPFlag, char userID, char se
 		return false;
 	}
 
+	
 	// Loop to parse the arguments passed to the program
 	for (int i = 1; i < argc; i++)
 	{
 		// Check if the argument is a user ID and withing the max length
 		if (strncmp(argv[i], "-user", ARG1_SKIP) == 0)
 		{
-			char userArg = argv[i] + ARG1_SKIP; // Skip the "-user" part of the argument
-			strncpy(userID, userArg, MAX_USER_ID);
-			userID[MAX_USER_ID] = '\0';
+			strncpy(userID, argv[i] + ARG1_SKIP, MAX_USER_ID - 1); // Skip the "-user" part of the argument
+			userID[MAX_USER_ID - 1] = '\0';
+			userExists = true;
 
 		}
 		else if (strncmp(argv[i], "-server", ARG2_SKIP) == 0)	// Check Server Arg for name or IP address 
 		{
-
-			char* serverArg = argv[i] + ARG2_SKIP; // Skip the "-server" part of the argument 
-			strncpy(serverName, serverArg, MAX_SERVER_NAME);
-			serverName[MAX_SERVER_NAME] = '\0';
-
-			// Validate the server arg to check if it's an IP address or a server name, set flag accordingly 
-			// If it is an IP address, then set the server address to the variable for the server address
-			if (IPCheck(serverName) == true)
-			{
-				strncpy(serverAddress, serverName, MAX_IP);
-				serverAddress[MAX_IP] = '\0';
-				serverOrIPFlag = false;
-			}
-			else
-			{
-				serverOrIPFlag = true;
-			}
-
-	
-
+			strncpy(serverName, argv[i] + ARG2_SKIP, MAX_SERVER_NAME - 1); // Skip the "-server" part of the argument
+			serverName[MAX_SERVER_NAME - 1] = '\0';
+			serverExists = true;
 		}
 		else
 		{
+			printf("\tERROR : Invalid argument: %s\n", argv[i]);					// *******TODO******* change usage message to display in the input ncurses window
+			printf("\t\tUsage: chat-client –user<userID> –server<server name>\n");
 			return false;
 		}
 	}
-	return true;
+
+	if (userExists && serverExists)
+	{
+		return true;
+	}
+
+
+	return false;
 
 }
 
@@ -254,41 +248,6 @@ bool resolveServerName(bool serverOrIPFlag, char serverName)
 
 
 
-bool createSocket(int socketID)
-{
-
-	
-
-	if (socketID == -1)
-	{
-		printf("ERROR: Failed to create socket.\n");
-		return false;
-	}
-
-	// Set up the server address structure
-	struct sockaddr_in serv_addr;
-
-	
-
-	return true; 
-
-
-}
-
-
-bool connectToServer(int socketID)
-{
-	// Connect to the server using the socket struct created in createSocket()
-	if (!connect(socketID, (struct sockaddr*)&serv_addr, sizeof(serv_addr)))
-	{
-
-		return false; 
-
-	}
-
-	return true;
-
-}
 // REWROTE AND COMBINED THE TWO ABOVE FUNCTIONS TO NOW CREATE SOCKET AND CONNECT
 //REWRITE OF ABOVE
 int connectToServer_(const char *serverName) 
@@ -324,10 +283,10 @@ int connectToServer_(const char *serverName)
     } 
 	else 
 	{
-        if (!resolveHostname(serverName, serverIP, sizeof(serverIP))) 
+        if (!resolveServername(serverName, serverIP, sizeof(serverIP))) 
 		{
-            printf("Error: Failed to resolve hostname: %s\n", serverName);
-            close(sockfd);
+            printf("Error: Failed to resolve servername: %s\n", serverName);
+            close(socketID);
             return -1;
         }
         server_addr.sin_addr.s_addr = inet_addr(serverIP);
