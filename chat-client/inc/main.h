@@ -29,13 +29,13 @@
 #define MAX_IP 16 // max IP address size
 
 typedef struct {
-    char userID[MAX_USER_ID] = {0};
-    int socketID = -1;
-    char serverName[MAX_SERVER_NAME] = {0};
-    char serverAddress[MAX_IP] = {0};
-    WINDOW *outWin = NULL;
-    WINDOW *inWin = NULL;
-    bool status = true;
+    char userID[MAX_USER_ID];
+    int socketID;
+    char serverName[MAX_SERVER_NAME];
+    char serverAddress[MAX_IP];
+    WINDOW *outWin;
+    WINDOW *inWin;
+    bool status;
 } ClientInfo;
 
 

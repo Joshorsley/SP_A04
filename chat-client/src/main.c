@@ -19,6 +19,16 @@ int main(int argc, char* argv[])
 	ClientInfo clientInfo;
 	pthread_t displayThread;
 
+	ClientInfo clientInfo = {
+		.userID = {0},
+		.socketID = -1,
+		.serverName = {0},
+		.serverAddress = {0},
+		.outWin = NULL,
+		.inWin = NULL,
+		.status = true
+	};
+
 	bool serverOrIPFlag = false;		// Flag to note if 3rd arg is server name (true) or an IP address (false)
 	bool programEndFlag = false;            // Flag to end the program, turned true when >>bye<< message is sent
 
@@ -56,7 +66,7 @@ int main(int argc, char* argv[])
 	// Initialize the ncurses library
 
 
-	programEnd(socketID, inWin, outWin); // end the program
+	//programEnd(socketID, inWin, outWin); // end the program
 	return 0;
 
 }
