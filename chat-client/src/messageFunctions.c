@@ -15,6 +15,7 @@
 #include "programFunctions.h"
 #include "messageFunctions.h"
 #include "UIFunctions.h"
+#include "main.h"
 
 #define MAX_BUFFER 1024 // max buffer size
 #define MAX_SNT_MESSAGE 80 // max message length for sent messages

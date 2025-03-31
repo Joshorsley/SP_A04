@@ -6,65 +6,97 @@
  */
 
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
-#include <time.h>
-#include <sys/socket.h>
+
 #include "programFunctions.h"
-#include "messageFunctions.h"
 #include "UIFunctions.h"
-
-#define MAX_BUFFER 1024 // max buffer size
-#define MAX_SNT_MESSAGE 80 // max message length for sent messages
-
-
-#define MAX_SNT_MESSAGE 80 // max message length for sent messages 
-#define MAX_RECVD_MESSAGE 40 // max message size for sending/recieving messages
-#define MAX_BUFFER 1024 // max buffer size									         **********TODO************ resize this to correct size
-#define MAX_TIMESTAMP 10 // max timestamp size
-#define MAX_IP 16 // max IP address size
-#define MSG_ROW_START 1 
+#include "messageFunctions.h"
+#include "main.h"
 
 
- /*
- * FUNCTION:             getTimestamp
- * DESCRIPTION:      This function gets the current time and stores it in the timestamp variable
- */
-void getTimestamp(char* timestamp)
+
+#define PORT 8000 // port number for the server
+
+ // This function will start the program with initial functions, including the intitial ncurses setup and ">>hi<<" message to the server with initial data 
+bool programStart(int argc, char* argv[], bool serverOrIPFlag, int socketID, char serverName)
 {
-    time_t currentTime;
-    time(&currentTime);
-    struct tm* timeInfo = localtime(&currentTime);
-    strftime(timestamp, MAX_TIMESTAMP, "%H:%M:%S", timeInfo);
-}
+
+
+	// Parse Arguments into variables for the program 
+	if (!parseArgs(argc, argv, serverOrIPFlag))
+	{
+		printf("ERROR: Failed to parse arguments.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+		return false;
+	}
 
 
 
+	// Resolve the server name to an IP address
+	if (serverOrIPFlag == true)
+	{
+		// Resolve the server name to an IP address
+		if (!resolveServerName(serverOrIPFlag, serverName))
+		{
+			printf("ERROR: Failed to resolve server name.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+			return false;
+		}
+	}
 
-/*
-* FUNCTION:
-* DESCRIPTION:    This function sends a message to the server to establish the connection and start communication
-*                   This message is not displayed in the output window
+
+
+	// Create socket
+	if (!createSocket(socketID))
+	{
+		printf("ERROR: Failed to create socket.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+		return false;
+	}
+
+	// Connect to the server
+	if (!connectToServer(socketID))
+	{
+		printf("ERROR: Failed to connect to server.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+		return false;
+	}
+
+	// Initialize the ncurses library 
+	/*
+ __
+.--()°'.'
+'|, . ,'		NCurses Be needed here
+ !_-(_\
+
 */
 
-bool hiMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID)
-{
-    // Send initial message to the server (Say >>Hi<< to the server)
-    // send the message to the server using send() **********TODO**********  add the IP address of the client to the beginning of the message
+// Create input window for typing messages 
+/*
+ __
+.--()°'.'
+'|, . ,'		NCurses Be needed here
+ !_-(_\
 
-    // Get the current time stamp
-    getTimestamp(timestamp);
+*/
 
-    strcpy(message, ">>Hi<< Server, lets connect.");
+// Create output window for displaying messages
+/*
+ __
+.--()°'.'
+'|, . ,'		NCurses Be needed here
+ !_-(_\
 
-    // Send the message to the server
-    if (!sendMessage(message, clientIP, userID, timestamp, programEndFlag, socketID))
-    {
-        printf("ERROR: >>Hi<< Message to Server failed to send");
-        return false;
-    }
+*/
+
+
+// Create a thread to handle incoming messages
+	incomingThreadCreate();
+	outgoingThreadCreate();
+
+	// Get the client IP address 
+	if (!getClientIP(clientIP))
+	{
+
+
+		printf("ERROR: Failed to get client IP address.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+		return false;
+	}
 
     // DO NOT DISPLAY THIS MESSAGE IN THE OUTPUT WINDOW ************************************DELETE BEFORE SUBMISSION
 
@@ -72,52 +104,103 @@ bool hiMessage(char* message, char* clientIP, bool programEndFlag, char* userID,
 }
 
 
-
-
-
-
-
-/*
-* FUNCTION:     byeMessage
-* DESCRIPTION:  This function sends a message to the server to close the connection and exit the program
-*               This message is not displayed in the output window
-*/
-
-void byeMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID)
+//GOOD
+// Function to parse the arguments passed to the program
+bool parseArgs(int argc, char* argv[], char* userID, char* serverName)
 {
-    // Send a message to the server to close the connection and exit the program
-    // send the message to the server using send() **********TODO**********  add the IP address of the client to the beginning of the message
+	bool userExists = false;
+	bool serverExists = false;
 
-    strcpy(message, ">>Bye<< Server, closing connection.");
+	if (argc != ARG_COUNT)
+	{
+		printf("\tERROR : Incorrect number of arguments.\n");					// *******TODO******* change usage message to display in the input ncurses window
+		printf("\t\tUsage: chat-client –user<userID> –server<server name>\n");
+		return false;
+	}
 
-    // Get the current time stamp
-    getTimestamp(timestamp);
+	
+	// Loop to parse the arguments passed to the program
+	for (int i = 1; i < argc; i++)
+	{
+		// Check if the argument is a user ID and withing the max length
+		if (strncmp(argv[i], "-user", ARG1_SKIP) == 0)
+		{
+			strncpy(userID, argv[i] + ARG1_SKIP, MAX_USER_ID - 1); // Skip the "-user" part of the argument
+			userID[MAX_USER_ID - 1] = '\0';
+			userExists = true;
 
-    if (!sendMessage(message, clientIP, userID, timestamp, programEndFlag, socketID))
-    {
-        return false;
-    }
+		}
+		else if (strncmp(argv[i], "-server", ARG2_SKIP) == 0)	// Check Server Arg for name or IP address 
+		{
+			strncpy(serverName, argv[i] + ARG2_SKIP, MAX_SERVER_NAME - 1); // Skip the "-server" part of the argument
+			serverName[MAX_SERVER_NAME - 1] = '\0';
+			serverExists = true;
+		}
+		else
+		{
+			printf("\tERROR : Invalid argument: %s\n", argv[i]);					// *******TODO******* change usage message to display in the input ncurses window
+			printf("\t\tUsage: chat-client –user<userID> –server<server name>\n");
+			return false;
+		}
+	}
 
-    // DO NOT DISPLAY THIS MESSAGE IN THE OUTPUT WINDOW ************************************DELETE BEFORE SUBMISSION
+	if (userExists && serverExists)
+	{
+		return true;
+	}
 
-    // Begin the process to close the connection and exit the program
-    programEndFlag = true;
-    return true;
+
+	return false;
+
 }
 
 
+//MEH - might need the ip validation check
+// Validates the server arg to check if it's an IP address or a server name
+bool IPCheck(const char* serverName)
+{
+	// Check : Is it a name or IP address?
+	int periodCount = 0;
+	for (int j = 0; serverName[j] != '\0'; j++)
+	{
+		if (serverName[j] == '.')
+		{
+			periodCount++;
+		}
+	}
 
+	// If exactly 3 periods, assume it's an IP address
+	if (periodCount == IP_DOT_COUNT)
+	{
+		serverOrIPFlag = false;  // It's an IP address
+	}
+	else
+	{
+		serverOrIPFlag = true;   // It's a server name
+	}
+
+	// Check if the IP address is valid                                          **********TODO**********  If time additional checks for valid IP address (check correct digits present and within valid range)
+
+
+
+	return true;
+}
+//REWRITE OF ABOVE
+bool isAddress(const char* serverName)
+{
+	struct sockaddr_in sa;
+	int result = inet_pton(AF_INET, serverName, &(sa.sin_addr));
+	return result != 0;
+}
 
 
 /*
-* FUNCTION:
-* DESCRIPTION: This function takes the user's input and creates a message to send to the server.
-*               If the message is formatted as >>bye<<, the byeMessage function is called to close the connection and exit the program and the rest of the createMessage function is skipped
-*               The message is then sent to the server and if it is not a >>bye<< message, it will be displayed in the output window
-* 			
+* FUNCTION:		resolveServerName
+* DESCRIPTION:	This function resolves the server name to an IP address
+* PARAMETERS:	None
+* RETURNS:		boolean value, true if the server name is successfully resolved, false otherwise
 */
-
-bool createMessage(char* message,char* messageContent, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID)
+bool resolveServerName(bool serverOrIPFlag, char serverName)
 {
 
 
@@ -167,29 +250,86 @@ bool createMessage(char* message,char* messageContent, char* clientIP, bool prog
 
 
 
+// REWROTE AND COMBINED THE TWO ABOVE FUNCTIONS TO NOW CREATE SOCKET AND CONNECT
+//REWRITE OF ABOVE
+int connectToServer_(const char *serverName) 
+{
+    int socketID;
+    struct sockaddr_in server_addr;
+    char serverIP[MAX_IP] = {0};
+    
+    // Create socket
+    socketID = socket(AF_INET, SOCK_STREAM, 0); // create socket
+    if (socketID < 0) 
+	{
+        perror("Error: could not create socket");
+        return -1;
+    }
+    
+   	// Zero out the structure preventing garbage values 
+	memset(&serv_addr, 0, sizeof(serv_addr));
 
+	// Set the server address family to IPv4
+	serv_addr.sin_family = AF_INET;
+
+	// set server IP address
+	serv_addr.sin_addr.s_addr = inet_addr(serverAddress);
+
+	// set up the port number
+	serv_addr.sin_port = htons(PORT);	
+    
+    // Check if serverName is an IP address or hostname
+    if (isIPAddress(serverName)) 
+	{
+        server_addr.sin_addr.s_addr = inet_addr(serverName);
+    } 
+	else 
+	{
+        if (!resolveServername(serverName, serverIP, sizeof(serverIP))) 
+		{
+            printf("Error: Failed to resolve servername: %s\n", serverName);
+            close(socketID);
+            return -1;
+        }
+        server_addr.sin_addr.s_addr = inet_addr(serverIP);
+    }
+    
+    // Connect to the server
+    if (connect(socketID, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) 
+	{
+        perror("Error: Connect failed");
+        close(socketID);
+        return -1;
+    }
+    
+    return socketID;
+}
 
 /*
-* FUNCTION:
-* DESCRIPTION: this function prepares the message format and sends the hi, bye or user message to the server.
-*   	        The message is displayed in the output window
-* 			   The function will return true if the message is successfully sent, and false otherwise
+* FUNCTION:		getClientIP
+* DESCRIPTION:	This function gets the client's IP address and stores it in the clientIP variable
+* PARAMETERS:	char* clientIP - the client's IP address
+* RETURNS:		boolean value, true if the client's IP address is successfully retrieved, false otherwise
 */
-bool sendMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID)
+bool getClientIP(char* clientIP)
 {
-    // Format message with necessary information
-    snprintf(message, MAX_BUFFER,
-        "%.15s_[%.5s]_%.80s_(%.8s)", // message formatting string                                 // removed >> from format string, server will handle addition of (make sure to showe this when displaying our message in the incoming message window)  ******TODO**********
-        clientIP,                      // Positions 1-15: IP address
-        userID,                        // Positions 17-23: [userID] in square brackets and 5 chars max
-        message,                       // Positions 28-67: up to 80 char message
-        timestamp);                    // Positions 69-78: timestamp in brackets (HH:MM:SS)
+	char hostname[256];
+	struct hostent* host_entry;				// pointer to an entry in the hosts database
 
-    if (send(socketID, message, strlen(message), 0) == -1)
-    {
-        printf("ERROR: Failed to send message to server.\n");
-        return false;
-    }
+	// Get the system hostname
+	if (gethostname(hostname, sizeof(hostname)) == -1)
+	{
+		printf("ERROR: Failed to get hostname.\n");
+		return false;
+	}
+
+	// Get the host information from the hostname, store it in the host_entry struct
+	host_entry = gethostbyname(hostname);
+	if (host_entry == NULL)
+	{
+		printf("ERROR: Failed to get host by name.\n");
+		return false;
+	}
 
     return true;
 }
