@@ -57,12 +57,15 @@
 #include <signal.h>
 #include <string.h>
 
-// Global variables
+
+
 clientInfo clients[MAX_CLIENTS] = {0}; 
 pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
 int clientCount = 0;
 int serverSocket;
 int serverRunning = 1;
+
+
 
 int main(int argc, char* argv[]) {
     int port = PORT;
@@ -78,7 +81,6 @@ int main(int argc, char* argv[]) {
     }
     signal(SIGINT, handleSignal);
 
-    // Create socket
     serverSocket = createServerSocket(port);
     if (serverSocket < 0) {
         return EXIT_FAILURE;
@@ -93,15 +95,12 @@ int main(int argc, char* argv[]) {
         clients[i].socket = -1;
     }
 
-    // Main loop to accept Client connections
     while(serverRunning) {
         struct sockaddr_in clientAddr;
         socklen_t clientLen = sizeof(clientAddr);
 
-        // Accept a new connection
         int clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddr, &clientLen);
 
-        // Check if accept failed
         if (clientSocket < 0) {
             if (serverRunning) {
                 perror("Accept failed");
@@ -111,12 +110,10 @@ int main(int argc, char* argv[]) {
         
         printf("New connection attempt received\n");
 
-        //Lock the mutex to safely access the clients array
         pthread_mutex_lock(&clients_mutex);
 
         if (clientCount >= MAX_CLIENTS) {
             printf("Maximum number of clients reached. Connection rejected.\n");
-            // Send rejection to client
             const char *msg = "Sorry, the chat server is full. Please try again later.\n";
             send(clientSocket, msg, strlen(msg), 0);
             close(clientSocket);
@@ -124,7 +121,6 @@ int main(int argc, char* argv[]) {
             continue;
         }
 
-        // Find an empty slot in the clients array
         int i;
         for (i = 0; i < MAX_CLIENTS; i++) {
             if (!clients[i].active) {
@@ -132,18 +128,15 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        // Add the client to our array
         clients[i].socket = clientSocket;
         clients[i].address = clientAddr;
         clients[i].active = 1;
-        clientCount++; // increment the client count
+        clientCount++; 
 
-        //unlock the mutex
         pthread_mutex_unlock(&clients_mutex);
 
-        // Create a thread to handle this client
         pthread_t thread;
-        int *clientIndex = malloc(sizeof(int)); // Allocate memory for the client index
+        int *clientIndex = malloc(sizeof(int)); 
         if (clientIndex == NULL) {
             perror("Failed to allocate memory");
             pthread_mutex_lock(&clients_mutex);
@@ -154,9 +147,8 @@ int main(int argc, char* argv[]) {
             continue;
         }
 
-        *clientIndex = i; // Store the index value
+        *clientIndex = i;
 
-        // Create a new thread to handle this client
         if (pthread_create(&thread, NULL, clientHandler, clientIndex) != 0) {
             perror("Failed to create thread");
             free(clientIndex);
