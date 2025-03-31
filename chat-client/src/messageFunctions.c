@@ -46,7 +46,6 @@ bool hiMessage(ClientInfo* clientInfo)
     // Send the message to the server
     if (send(clientInfo->socketID, message, strlen(message), 0) == -1)
     {
-        printf("ERROR: username failed to send to server.\n");
         return false;
     }
 
@@ -74,7 +73,6 @@ void byeMessage(ClientInfo* clientInfo)
     // Send the message to the server
     if (send(clientInfo->socketID, message, strlen(message), 0) == -1)
     {
-        printf("ERROR: bye failed to send to server.\n");
         return false;
     }
 

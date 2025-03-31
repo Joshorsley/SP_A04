@@ -26,8 +26,6 @@ bool parseArgs(int argc, char* argv[], char* userID, char* serverName)
 
 	if (argc != ARG_COUNT)
 	{
-		printf("\tERROR : Incorrect number of arguments.\n");					// *******TODO******* change usage message to display in the input ncurses window
-		printf("\t\tUsage: chat-client –user<userID> –server<server name>\n");
 		return false;
 	}
 
@@ -51,8 +49,6 @@ bool parseArgs(int argc, char* argv[], char* userID, char* serverName)
 		}
 		else
 		{
-			printf("\tERROR : Invalid argument: %s\n", argv[i]);					// *******TODO******* change usage message to display in the input ncurses window
-			printf("\t\tUsage: chat-client –user<userID> –server<server name>\n");
 			return false;
 		}
 	}
@@ -119,7 +115,6 @@ bool resolveServerName(ClientInfo *clientInfo)
     host_entry = gethostbyname(clientInfo->serverName);
     if (host_entry == NULL)
     {
-        printf("ERROR: Failed to get host by name.\n");
         return false;
     }
     
@@ -163,7 +158,6 @@ int connectToServer(ClientInfo *clientInfo)
         // Resolve the server name to an IP address
         if (!resolveServerName(clientInfo)) 
         {
-            printf("Error: Failed to resolve server name: %s\n", clientInfo->serverName);
             close(socketID);
             return -1;
         }

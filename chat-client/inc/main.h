@@ -33,8 +33,6 @@ typedef struct {
     int socketID;
     char serverName[MAX_SERVER_NAME];
     char serverAddress[MAX_IP];
-    WINDOW *outWin;
-    WINDOW *inWin;
     bool status;
 } ClientInfo;
 

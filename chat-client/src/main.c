@@ -22,8 +22,6 @@ int main(int argc, char* argv[])
 		.socketID = -1,
 		.serverName = {0},
 		.serverAddress = {0},
-		.outWin = NULL,
-		.inWin = NULL,
 		.status = true
 	};
 
@@ -44,19 +42,15 @@ int main(int argc, char* argv[])
 
 
 
-	//printf("========================================\n");	 // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
-	//printf("Welcome to the Chat - Client Terminal\n");	 // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 
 	if (parseArgs(argc, argv, clientInfo.userID, clientInfo.serverName) == false)
 	{
-		//printf("ERROR: Failed to parse arguments.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 		return -1;
 	}
 
 	clientInfo.socketID = connectToServer(&clientInfo);
 	if (clientInfo.socketID == -1)
 	{
-		//printf("ERROR: Failed to create connection.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 		return -1;
 	}
 
@@ -66,7 +60,7 @@ int main(int argc, char* argv[])
 	// Initialize the ncurses library
 	initscr();
 	cbreak();
-	noecho();
+	//noecho();
 	keypad(stdscr, TRUE);
 
 	drawWin(&inWin, &outWin, &msgRow, &maxPrintRow); // Draw the input and output windows
@@ -83,7 +77,7 @@ int main(int argc, char* argv[])
 	while (clientInfo.status)
 	{
 		// Get the message from the user
-		getMsg(clientInfo.inWin, buf);
+		getMsg(inWin, buf);
 
 		// Check if the user wants to exit
 		if (strcmp(buf, ">>bye<<") == 0)
@@ -94,10 +88,9 @@ int main(int argc, char* argv[])
 
 		if (send(clientInfo.socketID, buf, strlen(buf), 0) == -1)
 		{
-			printf("ERROR: Failed to create message.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 			break;
 		}
-		resetInputWin(clientInfo.inWin);
+		// resetInputWin(clientInfo.inWin);
 	}
 
 
