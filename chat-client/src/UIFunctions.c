@@ -12,7 +12,7 @@
 
 void *incomingMessages(void* clientInfo)
 {
-	printf("Incoming messages thread started.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+	//printf("Incoming messages thread started.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 
     return NULL;
 }
@@ -39,10 +39,12 @@ void drawWin(WINDOW **inWin, WINDOW **outWin, int *msgRow, int *maxPrintRow)
     mvhline(3, 0, '-', cols); // print '-' on 3rd line
     const char *label = " Messages ";
     mvprintw(3, (cols - strlen(label)) / 2, "%s", label); // insert "MESSAGES" in the middle of border
-
+    
     getmaxyx(*outWin, *maxPrintRow, cols);
     *maxPrintRow -= 2;
     
+    wmove(*inWin, 1, 4);
+
     wrefresh(*inWin);
     wrefresh(*outWin);
     refresh();

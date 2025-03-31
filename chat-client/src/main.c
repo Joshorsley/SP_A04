@@ -31,6 +31,8 @@ int main(int argc, char* argv[])
 	bool programEndFlag = false;            // Flag to end the program, turned true when >>bye<< message is sent
 
 	// UI Variables
+	WINDOW* inWin;			// Input window
+	WINDOW* outWin;			// Output window
 	//Message msg;
 	char buf[81];
 	int msgRow = MSG_ROW_START;
@@ -42,19 +44,19 @@ int main(int argc, char* argv[])
 
 
 
-	printf("========================================\n");	 // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
-	printf("Welcome to the Chat - Client Terminal\n");	 // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+	//printf("========================================\n");	 // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+	//printf("Welcome to the Chat - Client Terminal\n");	 // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 
 	if (parseArgs(argc, argv, clientInfo.userID, clientInfo.serverName) == false)
 	{
-		printf("ERROR: Failed to parse arguments.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+		//printf("ERROR: Failed to parse arguments.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 		return -1;
 	}
 
 	clientInfo.socketID = connectToServer(&clientInfo);
 	if (clientInfo.socketID == -1)
 	{
-		printf("ERROR: Failed to create connection.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+		//printf("ERROR: Failed to create connection.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 		return -1;
 	}
 
@@ -62,13 +64,19 @@ int main(int argc, char* argv[])
 
 
 	// Initialize the ncurses library
+	initscr();
+	cbreak();
+	noecho();
+	keypad(stdscr, TRUE);
 
-	if (pthread_create(&displayThread, NULL, incomingMessages, (void*)&clientInfo) != 0)
-	{
-		printf("ERROR: Failed to create incoming thread.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+	drawWin(&inWin, &outWin, &msgRow, &maxPrintRow); // Draw the input and output windows
+
+	// if (pthread_create(&displayThread, NULL, incomingMessages, (void*)&clientInfo) != 0)
+	// {
+	// 	printf("ERROR: Failed to create incoming thread.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 		
-		return -1;
-	}
+	// 	return -1;
+	// }
 
 
 	//send loop
