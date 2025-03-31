@@ -64,14 +64,20 @@ void broadcastMessage(char *message, int senderIndex) {
     pthread_mutex_unlock(&clients_mutex);
 }
 
-// Log client connection details
+// FUNCTION :
+// DESCRIPTION : 
+// PARAMETERS :
+// RETURNS :
 void logClientConnection(int index) {
     char clientIP[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &(clients[index].address.sin_addr), clientIP, INET_ADDRSTRLEN);
     printf("Handling client %d with IP %s \n", index, clientIP);
 }
 
-// Handle username registration process
+// FUNCTION :
+// DESCRIPTION : 
+// PARAMETERS :
+// RETURNS :
 bool registerUsername(int index) {
     int clientSocket = clients[index].socket;
     char buffer[BUFFER_SIZE];
@@ -108,14 +114,20 @@ bool registerUsername(int index) {
     return true;
 }
 
-// Announce that a user has joined
+// FUNCTION :
+// DESCRIPTION : 
+// PARAMETERS :
+// RETURNS :
 void announceUserJoined(int index) {
     char announcement[BUFFER_SIZE];
     snprintf(announcement, sizeof(announcement), "User %s has joined the chat", clients[index].username);
     broadcastMessage(announcement, index);
 }
 
-// Process client messages in a loop
+// FUNCTION :
+// DESCRIPTION : 
+// PARAMETERS :
+// RETURNS :
 void processClientMessages(int index) {
     int clientSocket = clients[index].socket;
     char buffer[BUFFER_SIZE];
@@ -144,7 +156,10 @@ void processClientMessages(int index) {
     }
 }
 
-// Handle client disconnection
+// FUNCTION :
+// DESCRIPTION : 
+// PARAMETERS :
+// RETURNS :
 void handleClientDisconnect(int index) {
     // Announce that the user has left
     char announcement[BUFFER_SIZE];
@@ -154,7 +169,10 @@ void handleClientDisconnect(int index) {
     disconnectClient(index);
 }
 
-// Disconnect a client and clean up
+// FUNCTION :
+// DESCRIPTION : 
+// PARAMETERS :
+// RETURNS :
 void disconnectClient(int index) {
     // Lock the mutex before updating shared data
     pthread_mutex_lock(&clients_mutex);
@@ -239,6 +257,10 @@ void parcelMessage(int receiverSocket, char* senderIP, char* senderName, char* m
     }
 }
 
+// FUNCTION :
+// DESCRIPTION : 
+// PARAMETERS :
+// RETURNS :
 int isUsernameTaken(char* username, int currentIndex) {
     pthread_mutex_lock(&clients_mutex);
     
