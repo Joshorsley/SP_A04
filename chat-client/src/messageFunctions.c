@@ -82,30 +82,45 @@ void byeMessage(ClientInfo* clientInfo)
 * PARAMETERS:   ClientInfo* info - pointer to ClientInfo structure containing connection details
 * RETURNS:      void
 */
-void receiveMessages(ClientInfo* info) 
+void receiveMessages(ClientInfo* info)
 {
     int socketID = info->socketID;
     int rowNum = MSG_ROW_START;
     int maxPrintRow = 10;
     char buffer[MAX_BUFFER];
-    while (1) 
-	{
+    
+    while (1)
+    {
         memset(buffer, 0, MAX_BUFFER);
         int bytesReceived = recv(socketID, buffer, MAX_BUFFER - 1, 0);
-        if (bytesReceived <= 0) 
-		{
+        
+        if (bytesReceived <= 0)
+        {
             break;
         }
+        
         buffer[bytesReceived] = '\0';
         
-        if (rowNum > maxPrintRow)
+        char* currentMsg = buffer;
+        char* nextMsg;
+        
+        while ((nextMsg = strchr(currentMsg, '\n')) != NULL)
         {
-            rowNum = MSG_ROW_START;
-            werase(info->outWin);
-            drawBorder(info->outWin, " Messages ");
+            *nextMsg = '\0'; 
+            
+            if (rowNum > maxPrintRow)
+            {
+                rowNum = MSG_ROW_START;
+                werase(info->outWin);
+                drawBorder(info->outWin, " Messages ");
+            }
+            
+            printMsg(info->outWin, rowNum, currentMsg);
+            rowNum++;
+            currentMsg = nextMsg + 1;
         }
-
-        printMsg(info->outWin, rowNum, buffer);
-        rowNum++;
+        if (*currentMsg != '\0')
+        {
+        }
     }
 }
