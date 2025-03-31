@@ -13,7 +13,6 @@
 
 void *incomingMessages(void* clientInfo)
 {
-	//printf("Incoming messages thread started.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
     ClientInfo* info = (ClientInfo*)clientInfo;
 
     receiveMessages(clientInfo);
@@ -26,14 +25,13 @@ void drawWin(WINDOW **inWin, WINDOW **outWin, int *msgRow, int *maxPrintRow)
     int rows, cols;
     getmaxyx(stdscr, rows, cols);
     
+    *inWin = newwin(3, cols, 0, 0);
+    *outWin = newwin(rows - 3, cols, 3, 0);
+
     // color
     start_color();
     init_pair(1, COLOR_WHITE, COLOR_MAGENTA);
-    bkgd(COLOR_PAIR(1));
-    
-    *inWin = newwin(3, cols, 0, 0);
-    *outWin = newwin(rows - 3, cols, 3, 0);
-    
+    bkgd(COLOR_PAIR(1));  
     wbkgd(*inWin, COLOR_PAIR(1));
     wbkgd(*outWin, COLOR_PAIR(1));
     
@@ -44,15 +42,11 @@ void drawWin(WINDOW **inWin, WINDOW **outWin, int *msgRow, int *maxPrintRow)
     
     getmaxyx(*outWin, *maxPrintRow, cols);
     *maxPrintRow -= 2;
-    
-    keypad(*inWin, TRUE);
 
     wrefresh(*outWin);
     refresh();
 
     mvwprintw(*inWin, 1, 2, "> ");
-    wmove(*inWin, 1, 4);
-    curs_set(1);
     wrefresh(*inWin);
 }
 
@@ -60,17 +54,12 @@ void resetInputWin(WINDOW *inWin)
 {
     werase(inWin);
     mvwprintw(inWin, 1, 2, "> ");
-    wmove(inWin, 1, 4);  // Position cursor after prompt
-    wrefresh(inWin);     // Show the changes
+    wrefresh(inWin);
 }
 
 void getMsg(WINDOW *inWin, char *buf)
 {
-    resetInputWin(inWin);
-    echo();            
-    curs_set(1);       
-    wmove(inWin, 1, 4); 
-    wrefresh(inWin);    
+    resetInputWin(inWin); 
     mvwgetnstr(inWin, 1, 4, buf, 80);
 }
 
@@ -81,6 +70,9 @@ void printMsg(WINDOW *outWin, int row, char message[])
 
     mvwprintw(outWin, row, 1, formattedMsg);
     wrefresh(outWin);
+
+    wmove(stdscr, 1, 4);
+    wrefresh(stdscr);
 }
 
 void endProg(WINDOW *inWin, WINDOW *outWin) {
