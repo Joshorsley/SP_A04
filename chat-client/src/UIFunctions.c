@@ -47,13 +47,15 @@ void drawWin(WINDOW **inWin, WINDOW **outWin, int *msgRow, int *maxPrintRow)
     // color
     start_color();
     init_pair(1, COLOR_WHITE, COLOR_MAGENTA);
-    bkgd(COLOR_PAIR(1));  
+    bkgd(COLOR_PAIR(1));
+    
+    clear();
+    refresh();
+
     wbkgd(*inWin, COLOR_PAIR(1));
     wbkgd(*outWin, COLOR_PAIR(1));
-    
-    mvhline(3, 0, '-', cols); 
-    const char *label = " Messages ";
-    mvprintw(3, (cols - strlen(label)) / 2, "%s", label); 
+
+    drawBorder(*outWin, " Messages ");
     
     getmaxyx(*outWin, *maxPrintRow, cols);
     *maxPrintRow -= 2;
@@ -63,6 +65,25 @@ void drawWin(WINDOW **inWin, WINDOW **outWin, int *msgRow, int *maxPrintRow)
 
     mvwprintw(*inWin, 1, 2, "> ");
     wrefresh(*inWin);
+}
+
+/*
+* FUNCTION:     drawBorder
+* DESCRIPTION:  This function draws a border around the specified window and adds a label at the top.
+*               It will also refresh the window to display the changes.
+* PARAMETERS:   WINDOW *win - pointer to the window to draw the border on
+*               const char *label - label to display at the top of the window
+* RETURNS:      void - nothing is returned
+*/
+void drawBorder(WINDOW *win, const char *label)
+{
+    int rows, cols;
+    getmaxyx(win, rows, cols);
+
+    mvhline(3, 0, '-', cols);
+    mvprintw(3, (cols - strlen(label)) / 2, "%s", label); 
+
+    wrefresh(win);
 }
 
 

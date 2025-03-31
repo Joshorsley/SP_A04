@@ -90,8 +90,6 @@ int main(int argc, char* argv[])
 	pthread_cancel(displayThread);
 	pthread_join(displayThread, NULL);
 
-	close(clientInfo.socketID); 
-
 	endProg(clientInfo.inWin, clientInfo.outWin);
 	return 0;
 }

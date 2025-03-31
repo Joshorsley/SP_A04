@@ -16,6 +16,7 @@
 
 void *incomingMessages(void* clientInfo);
 void drawWin(WINDOW **inWin, WINDOW **outWin, int *msgRow, int *maxPrintRow);
+void drawBorder(WINDOW *win, const char *label);
 void resetInputWin(WINDOW *inWin);
 void getMsg(WINDOW *inWin, char *buf);
 void endProg(WINDOW *inWin, WINDOW *outWin);

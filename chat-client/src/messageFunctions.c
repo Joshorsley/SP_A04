@@ -97,12 +97,15 @@ void receiveMessages(ClientInfo* info)
             break;
         }
         buffer[bytesReceived] = '\0';
-        printMsg(info->outWin, rowNum, buffer);
-        rowNum++;
+        
         if (rowNum > maxPrintRow)
         {
             rowNum = MSG_ROW_START;
             werase(info->outWin);
+            drawBorder(info->outWin, " Messages ");
         }
+
+        printMsg(info->outWin, rowNum, buffer);
+        rowNum++;
     }
 }
