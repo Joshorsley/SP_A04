@@ -35,14 +35,9 @@ int main(int argc, char* argv[])
 		.outWin = NULL
 	};
 
-	bool serverOrIPFlag = false;		
-	bool programEndFlag = false;           
 	char buf[81] = {0};
 	int msgRow = MSG_ROW_START;
 	int maxPrintRow;
-	char message[MAX_BUFFER];      
-	static char timestamp[MAX_TIMESTAMP];		
-	char clientIP[MAX_IP];					
 
 	if (parseArgs(argc, argv, clientInfo.userID, clientInfo.serverName) == false)
 	{
