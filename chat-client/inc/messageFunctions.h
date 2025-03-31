@@ -14,12 +14,14 @@
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
+#include "main.h"
 
-bool hiMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID);
+bool hiMessage(ClientInfo* clientInfo);
 void byeMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID);
 bool createMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID);
 bool sendMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID);
 bool receiveMessage(char* clientIP, char* userID);
+
 
 #endif // MESSAGE_FUNCTIONS_H
 

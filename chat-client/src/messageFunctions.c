@@ -29,19 +29,6 @@
 #define MSG_ROW_START 1 
 
 
- /*
- * FUNCTION:             getTimestamp
- * DESCRIPTION:      This function gets the current time and stores it in the timestamp variable
- */
-void getTimestamp(char* timestamp)
-{
-    time_t currentTime;
-    time(&currentTime);
-    struct tm* timeInfo = localtime(&currentTime);
-    strftime(timestamp, MAX_TIMESTAMP, "%H:%M:%S", timeInfo);
-}
-
-
 
 
 /*
@@ -50,24 +37,18 @@ void getTimestamp(char* timestamp)
 *                   This message is not displayed in the output window
 */
 
-bool hiMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID)
+bool hiMessage(ClientInfo* clientInfo)
 {
-    // Send initial message to the server (Say >>Hi<< to the server)
-    // send the message to the server using send() **********TODO**********  add the IP address of the client to the beginning of the message
+    char message[MAX_BUFFER]; // Declare message variable with appropriate size
 
-    // Get the current time stamp
-    getTimestamp(timestamp);
-
-    strcpy(message, ">>Hi<< Server, lets connect.");
+    strcpy(message, clientInfo->userID);
 
     // Send the message to the server
-    if (!sendMessage(message, clientIP, userID, timestamp, programEndFlag, socketID))
+    if (send(clientInfo->socketID, message, strlen(message), 0) == -1)
     {
-        printf("ERROR: >>Hi<< Message to Server failed to send");
+        printf("ERROR: username failed to send to server.\n");
         return false;
     }
-
-    // DO NOT DISPLAY THIS MESSAGE IN THE OUTPUT WINDOW ************************************DELETE BEFORE SUBMISSION
 
     return true;
 }

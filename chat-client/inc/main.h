@@ -28,5 +28,15 @@
 #define MAX_TIMESTAMP 10 // max timestamp size
 #define MAX_IP 16 // max IP address size
 
+typedef struct {
+    char userID[MAX_USER_ID] = {0};
+    int socketID = -1;
+    char serverName[MAX_SERVER_NAME] = {0};
+    char serverAddress[MAX_IP] = {0};
+    WINDOW *outWin = NULL;
+    WINDOW *inWin = NULL;
+    bool status = true;
+} ClientInfo;
+
 
 #endif /* MAIN_H */

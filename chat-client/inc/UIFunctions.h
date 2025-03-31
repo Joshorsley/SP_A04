@@ -8,6 +8,8 @@
 #include <stdbool.h>
 #include <ncurses.h>
 #include <time.h>
+#include "main.h"
+
 
 
 #ifndef UI_FUNCTIONS_H

@@ -252,7 +252,7 @@ bool resolveServerName(bool serverOrIPFlag, char serverName)
 
 // REWROTE AND COMBINED THE TWO ABOVE FUNCTIONS TO NOW CREATE SOCKET AND CONNECT
 //REWRITE OF ABOVE
-int connectToServer_(const char *serverName) 
+int connectToServer(const char *serverName) 
 {
     int socketID;
     struct sockaddr_in server_addr;
