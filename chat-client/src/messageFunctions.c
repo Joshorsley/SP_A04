@@ -79,8 +79,11 @@ void byeMessage(ClientInfo* clientInfo)
 }
 
 
-void receiveMessages(int socketID) 
+void receiveMessages(ClientInfo* info) 
 {
+    int socketID = info->socketID;
+    int rowNum = MSG_ROW_START;
+    int maxPrintRow = 10;
     char buffer[MAX_BUFFER];
     while (1) 
 	{
@@ -93,5 +96,12 @@ void receiveMessages(int socketID)
         }
         buffer[bytesReceived] = '\0';
         //printf("%s", buffer); 
+        printMsg(info->outWin, rowNum, buffer);
+        rowNum++;
+        if (rowNum > maxPrintRow)
+        {
+            rowNum = MSG_ROW_START;
+            werase(info->outWin);
+        }
     }
 }

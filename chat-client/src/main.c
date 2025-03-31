@@ -22,15 +22,15 @@ int main(int argc, char* argv[])
 		.socketID = -1,
 		.serverName = {0},
 		.serverAddress = {0},
-		.status = true
+		.status = true,
+		.inWin = NULL,			// Input window
+		.outWin = NULL
 	};
 
 	bool serverOrIPFlag = false;		// Flag to note if 3rd arg is server name (true) or an IP address (false)
 	bool programEndFlag = false;            // Flag to end the program, turned true when >>bye<< message is sent
 
 	// UI Variables
-	WINDOW* inWin;			// Input window
-	WINDOW* outWin;			// Output window
 	//Message msg;
 	char buf[81] = {0};
 	int msgRow = MSG_ROW_START;
@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
 	//noecho();
 	keypad(stdscr, TRUE);
 
-	drawWin(&inWin, &outWin, &msgRow, &maxPrintRow); // Draw the input and output windows
+	drawWin(&clientInfo.inWin, &clientInfo.outWin, &msgRow, &maxPrintRow); // Draw the input and output windows
 
 	if (pthread_create(&displayThread, NULL, incomingMessages, (void*)&clientInfo) != 0)
 	{
@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
 	while (clientInfo.status)
 	{
 		// Get the message from the user
-		getMsg(inWin, buf);
+		getMsg(clientInfo.inWin, buf);
 
 		buf[strcspn(buf, "\n")] = '\0';
 
@@ -99,7 +99,7 @@ int main(int argc, char* argv[])
 	pthread_join(displayThread, NULL);
 
 	//programEnd(socketID, inWin, outWin); // end the program
-	endProg(inWin, outWin); // end the program
+	endProg(clientInfo.inWin, clientInfo.outWin); // end the program
 	return 0;
 
 }

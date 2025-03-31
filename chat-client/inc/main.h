@@ -27,6 +27,7 @@
 #define MAX_BUFFER 1024 // max buffer size									         **********TODO************ resize this to correct size
 #define MAX_TIMESTAMP 10 // max timestamp size
 #define MAX_IP 16 // max IP address size
+#define BUFFER_SIZE 256
 
 typedef struct {
     char userID[MAX_USER_ID];
@@ -34,6 +35,8 @@ typedef struct {
     char serverName[MAX_SERVER_NAME];
     char serverAddress[MAX_IP];
     bool status;
+    WINDOW* inWin;			
+	WINDOW* outWin;
 } ClientInfo;
 
 

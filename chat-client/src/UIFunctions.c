@@ -8,6 +8,7 @@
 #include "programFunctions.h"
 #include "messageFunctions.h"
 #include "UIFunctions.h"
+#include "main.h"
 
 
 void *incomingMessages(void* clientInfo)
@@ -15,7 +16,7 @@ void *incomingMessages(void* clientInfo)
 	//printf("Incoming messages thread started.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
     ClientInfo* info = (ClientInfo*)clientInfo;
 
-    receiveMessages(info->socketID);
+    receiveMessages(clientInfo);
 
     return NULL;
 }
@@ -73,17 +74,10 @@ void getMsg(WINDOW *inWin, char *buf)
     mvwgetnstr(inWin, 1, 4, buf, 80);
 }
 
-void printMsg(WINDOW *outWin, int row, Message msg)
+void printMsg(WINDOW *outWin, int row, char message[])
 {
-    char timestamp[10];
-    time_t now = time(NULL);
-    struct tm *t = localtime(&now);
-    strftime(timestamp, sizeof(timestamp), "%H:%M:%S", t);
-    
-    char formattedMsg[100];
-
-    snprintf(formattedMsg, sizeof(formattedMsg),"%-15s %s >> %-41s (%s)", 
-             msg.ip, msg.username, msg.message, timestamp);
+    char formattedMsg[BUFFER_SIZE];
+    snprintf(formattedMsg, sizeof(formattedMsg), "%s", message);
 
     mvwprintw(outWin, row, 1, formattedMsg);
     wrefresh(outWin);
