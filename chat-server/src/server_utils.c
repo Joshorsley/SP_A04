@@ -4,16 +4,26 @@
 * PROGRAMMERS : Josh Horsley, Kalina Cathcart, John Paventi, Daimon Quin, Tony Yang
 * FIRST VERSION : 2025-03-20
 * UPDATED : 2025-03-31
-* DESCRIPTION :
+* DESCRIPTION : This file hols the functions that handle server functionality for the program. 
+* 		The functions included in this file handle socket creation and configuration, shutdown procedures and client connection management. 
 * FUNCTIONS:
+*   createServerSocket    - Creates and configures the main server listening socket
+*   cleanupAndExit        - Performs graceful shutdown and resource cleanup
+*   checkForServerShutdown- Checks if server should shutdown when last client disconnects
 */
+
 #include "server_utils.h"
 #include "main.h"
 
-// FUNCTION :
-// DESCRIPTION : 
-// PARAMETERS :
-// RETURNS :
+/*
+* FUNCTION:     createServerSocket
+* DESCRIPTION:  This function creates, configures, and binds the server's main listening socket. 
+* 		First it will create the TCP socket, then it will set an option to allow port reuse. 
+* 		It then binds to the chosen port on all interfaces and begins to listen for connections.
+* 		If there are any errors, the function will close the socket and return a failure code.  
+* PARAMETERS:   int port - The port number to bind to 
+* RETURNS:      int - The socket file descriptor on success, -1 on failure
+*/
 int createServerSocket(int port) {
     int serverSocket;
     struct sockaddr_in serverAddr;
@@ -56,10 +66,18 @@ int createServerSocket(int port) {
     return serverSocket;
 }
 
-// FUNCTION :
-// DESCRIPTION : 
-// PARAMETERS :
-// RETURNS :
+
+
+/*
+* FUNCTION:     cleanupAndExit
+* DESCRIPTION:  Performs orderly shutdown and cleanup of all server resources.
+*               It will close  all active client connections, releases mutex resources
+*               and finally closes server listening socket
+*               Uses mutex to protect access to shared clients array
+*		Is called when SIGINT is used or number of clients reaches 0. 
+* PARAMETERS:   void
+* RETURNS:      void
+*/
 void cleanupAndExit(void) {
     printf("Cleaning up resources...\n");
 
@@ -84,10 +102,17 @@ void cleanupAndExit(void) {
     printf("Server shutdown complete\n");
 }
 
-// FUNCTION :
-// DESCRIPTION : 
-// PARAMETERS :
-// RETURNS :
+
+
+
+/*
+* FUNCTION:     checkForServerShutdown
+* DESCRIPTION:  This function checks if the server should automatically shutdown when last client disconnects
+*               It checks if the client count is 0 and sets the serverRunning flag accordingly. 
+*               It ehrn creates a temporary connection to unblock the accept call. 
+* PARAMETERS:   void
+* RETURNS:      void
+*/
 void checkForServerShutdown(void) {
     if (clientCount == 0) {
         printf("ALL clients disconnected. Shutting down server...\n");
