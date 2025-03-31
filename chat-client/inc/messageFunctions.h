@@ -17,10 +17,10 @@
 #include "main.h"
 
 bool hiMessage(ClientInfo* clientInfo);
-void byeMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID);
-bool createMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID);
-bool sendMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID);
-bool receiveMessage(char* clientIP, char* userID);
+void byeMessage(ClientInfo* clientInfo);
+//bool createMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID);
+//bool sendMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID);
+//bool receiveMessage(char* clientIP, char* userID);
 
 
 #endif // MESSAGE_FUNCTIONS_H

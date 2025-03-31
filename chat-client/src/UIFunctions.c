@@ -10,36 +10,11 @@
 #include "UIFunctions.h"
 
 
-bool incomingThreadCreate()
+void *incomingMessages(void* clientInfo)
 {
-	// Create a thread to handle incoming message window
-	// If the thread is created, return true
-	// If the thread is not created, return false
-	return true;
-}
+	printf("Incoming messages thread started.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 
-bool outgoingThreadCreate()
-{
-	// Create a thread to handle outgoing message window 
-	// If the thread is created, return true
-	// If the thread is not created, return false
-	return true;
-}
-
-bool displayMessage()
-{
-
-	// Display the message in the Output Window
-	// If the message is displayed, return true
-	// If the message is not displayed, return false
-	/*
-	 __
- .--()°'.'
-'|, . ,'		NCurses Be needed here
- !_-(_\
-
-*/
-	return true;
+    return NULL;
 }
 
 void drawWin(WINDOW **inWin, WINDOW **outWin, int *msgRow, int *maxPrintRow)
@@ -86,21 +61,21 @@ void getMsg(WINDOW *inWin, char *buf)
     mvwgetnstr(inWin, 1, 4, buf, 80);
 }
 
-void printMsg(WINDOW *outWin, int row, Message msg)
-{
-    char timestamp[10];
-    time_t now = time(NULL);
-    struct tm *t = localtime(&now);
-    strftime(timestamp, sizeof(timestamp), "%H:%M:%S", t);
+// void printMsg(WINDOW *outWin, int row, Message msg)
+// {
+//     char timestamp[10];
+//     time_t now = time(NULL);
+//     struct tm *t = localtime(&now);
+//     strftime(timestamp, sizeof(timestamp), "%H:%M:%S", t);
     
-    char formattedMsg[100];
+//     char formattedMsg[100];
     
-    snprintf(formattedMsg, sizeof(formattedMsg),"%-15s %s >> %-41s (%s)", 
-    msg.ip, msg.username, msg.message, timestamp);
+//     snprintf(formattedMsg, sizeof(formattedMsg),"%-15s %s >> %-41s (%s)", 
+//     msg.ip, msg.username, msg.message, timestamp);
     
-    mvwprintw(outWin, row, 1, formattedMsg);
-    wrefresh(outWin);
-}
+//     mvwprintw(outWin, row, 1, formattedMsg);
+//     wrefresh(outWin);
+// }
 
 void endProg(WINDOW *inWin, WINDOW *outWin) {
     delwin(inWin); // Delete input window
