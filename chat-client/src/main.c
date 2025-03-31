@@ -13,7 +13,76 @@
 #include <ncurses.h>
 
 
+int main(int argc, char* argv[])
+{
 
+	// Variable Declarations: 
+	// program Variables
+	char userID[MAX_USER_ID];			// User ID
+	char serverName[MAX_SERVER_NAME];	// Server Name
+	char serverAddress[MAX_IP];			// Server Address
+	bool serverOrIPFlag = false;		// Flag to note if 3rd arg is server name (true) or an IP address (false)
+	int socketID;						// Socket ID
+	bool programEndFlag = false;            // Flag to end the program, turned true when >>bye<< message is sent
+	// UI Variables
+	WINDOW* inWin;					// ncurses windows for input 
+	WINDOW* outWin;					// ncurses windows for output
+	Message msg;
+	char buf[81];
+	int msgRow = MSG_ROW_START;
+	int maxPrintRow;
+	// message variables 
+	char message[MAX_BUFFER];           // Buffer for user messages
+	static char timestamp[MAX_TIMESTAMP];			// Timestamp for messages
+	char clientIP[MAX_IP];					// Client IP address for messages 
+
+
+
+	printf("========================================\n");	 // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+	printf("Welcome to the Chat - Client Terminal\n");	 // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+
+
+	// Start the program with initial functions 
+	if (!programStart(argc, argv[], serverOrIPFlag, socketID, serverName, userID, clientIP, serverAddress, timestamp, message, programEndFlag))
+	{
+		printf("ERROR: Failed to start the program.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+		return -1;
+	}
+
+
+
+	// Loop for User Input 
+	while (programEndFlag == false)
+	{
+
+		// ************************************TODO************ Stop the input at 80 characters and do not allow the user to enter more characters / do not notify the user of the limit
+		// 
+	// Create a message to send to the server and display in the Output Window:
+		// the user should be allowed to enter a message of up to 80 characters.
+				// When the user hits the 80 character input boundary – the UI must stop accepting characters for input with no other notification to the user.
+		// if a message is received when the user is typing another message, it MUST not interrupt the message being currently composed
+
+
+		// Check: If a message is entered, create the message and send it to the server (create message will determine if a bye message is needed instead) 
+		if (strlen(message) > 0)
+		{
+
+			if (!createMessage(message, clientIP, programEndFlag, userID, timestamp, serverOrIPFlag, socketID))
+			{
+				printf("ERROR: Failed to create message.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+
+				return -1;
+			}
+
+
+		}
+
+	}
+
+	programEnd(socketID, inWin, outWin); // end the program
+	return 0;
+
+}
 
 /*
 
