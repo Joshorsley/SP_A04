@@ -1,11 +1,9 @@
-/* FILE :
+/* FILE :       messageFunctions.h
  * PROJECT :    SP A4 : Can We Talk System
- * AUTHORS :
+ * AUTHORS :    Kalina Cathcart, Josh Horsley, John Paventi, Daimon Quinn, Jiwoo (Tony) Yang
  * DATE :       2025 - 03 -22
- * DESCRIPTION : This file holds
+ * DESCRIPTION : This file holds the function prototypes for messageFunctions.c. These functions handle the sending and receiving of messages between the client and server. 
  */
-
-
 
 #ifndef MESSAGE_FUNCTIONS_H
 #define MESSAGE_FUNCTIONS_H
@@ -19,10 +17,6 @@
 bool hiMessage(ClientInfo* clientInfo);
 void byeMessage(ClientInfo* clientInfo);
 void receiveMessages(ClientInfo* info);
-//bool createMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID);
-//bool sendMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID);
-//bool receiveMessage(char* clientIP, char* userID);
-
 
 #endif // MESSAGE_FUNCTIONS_H
 
