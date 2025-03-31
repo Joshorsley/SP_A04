@@ -1,6 +1,6 @@
 /* FILE :       messageFunctions.c
  * PROJECT :    SP A4 : Can We Talk System
- * AUTHORS :
+ * AUTHORS :	Kalina Cathcart, Josh Horsley, Jon Paventi, Daimon Quinn, Jiwoo (Tony) Yang
  * DATE :       2025 - 03 -22
  * DESCRIPTION : This file holds the functions related to creating, sending and recieving messages.
  */
@@ -17,33 +17,29 @@
 #include "UIFunctions.h"
 #include "main.h"
 
-#define MAX_BUFFER 1024 // max buffer size
-#define MAX_SNT_MESSAGE 80 // max message length for sent messages
-
-
-#define MAX_SNT_MESSAGE 80 // max message length for sent messages 
-#define MAX_RECVD_MESSAGE 40 // max message size for sending/recieving messages
-#define MAX_BUFFER 1024 // max buffer size									         **********TODO************ resize this to correct size
-#define MAX_TIMESTAMP 10 // max timestamp size
-#define MAX_IP 16 // max IP address size
+#define MAX_SNT_MESSAGE 80 
+#define MAX_RECVD_MESSAGE 40 
+#define MAX_BUFFER 1024 
+#define MAX_TIMESTAMP 10 
+#define MAX_IP 16 
 #define MSG_ROW_START 1 
 
 
 
-
 /*
-* FUNCTION:
-* DESCRIPTION:    This function sends a message to the server to establish the connection and start communication
-*                   This message is not displayed in the output window
+* FUNCTION:     hiMessage
+* DESCRIPTION:  Sends an initial connection message to the server with the user ID.
+*               This message is not displayed in the UI.
+* PARAMETERS:   ClientInfo* clientInfo - pointer to ClientInfo structure
+* RETURNS:      bool - true if message was sent successfully, false otherwise
 */
 
 bool hiMessage(ClientInfo* clientInfo)
 {
-    char message[MAX_BUFFER]; // Declare message variable with appropriate size
+    char message[MAX_BUFFER];
 
     strcpy(message, clientInfo->userID);
 
-    // Send the message to the server
     if (send(clientInfo->socketID, message, strlen(message), 0) == -1)
     {
         return false;
@@ -55,19 +51,18 @@ bool hiMessage(ClientInfo* clientInfo)
 
 
 
-
-
-
 /*
 * FUNCTION:     byeMessage
-* DESCRIPTION:  This function sends a message to the server to close the connection and exit the program
-*               This message is not displayed in the output window
+* DESCRIPTION:  Sends a termination message to the server to close the connection.
+*               This message isn't displayed in the UI.
+* PARAMETERS:   ClientInfo* clientInfo - pointer to ClientInfo structure
+* RETURNS:      bool - true if message was sent successfully, false otherwise
 */
 
 void byeMessage(ClientInfo* clientInfo)
 {
     
-	char message[MAX_BUFFER]; 
+    char message[MAX_BUFFER]; 
     strcpy(message, ">>bye<<");
 
     if (send(clientInfo->socketID, message, strlen(message), 0) == -1)
@@ -79,6 +74,14 @@ void byeMessage(ClientInfo* clientInfo)
 }
 
 
+
+/*
+* FUNCTION:     receiveMessages
+* DESCRIPTION:  Continuously receives messages from the server and displays them in the output window.
+*               Manages message display rotation when the window fills up.
+* PARAMETERS:   ClientInfo* info - pointer to ClientInfo structure containing connection details
+* RETURNS:      void
+*/
 void receiveMessages(ClientInfo* info) 
 {
     int socketID = info->socketID;
@@ -91,11 +94,9 @@ void receiveMessages(ClientInfo* info)
         int bytesReceived = recv(socketID, buffer, MAX_BUFFER - 1, 0);
         if (bytesReceived <= 0) 
 		{
-            //printf("Server disconnected or error occurred.\n");
             break;
         }
         buffer[bytesReceived] = '\0';
-        //printf("%s", buffer); 
         printMsg(info->outWin, rowNum, buffer);
         rowNum++;
         if (rowNum > maxPrintRow)

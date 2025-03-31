@@ -2,7 +2,16 @@
  * PROJECT :    SP A4 : Can We Talk System
  * AUTHORS :    Kalina Cathcart, Josh Horsley, John Paventi, Daimon Quinn, Jiwoo (Tony) Yang
  * DATE :       2025 - 03 -22
- * DESCRIPTION : This file hold the entry point for the chat - client program.
+ * DESCRIPTION : This file hold the entry point for the chat - client program. The main function will first set up the client information structure and variables for the program's use. 
+ * 		 Once the set up is completed, the arguments are parsed for the user ID and serverName given by the user on the command line. 
+ *		 The client will use this information to connect to the server.
+ *		 Once connected to the server, the program will send a hi message to establish initial details for the server. 
+ *		 The program will then set up the ncurses library and UI for for the input and output windows. 
+ *		 Next, a thread is created to handle incoming messages from the server while the client performs other actions. 
+ *		 The program will then enter a loop until the client ends the program. 
+ *		 In the loop, the user will be able to enter messages into the output window and send them to the server.
+ *		 If the user enters >>bye<<, then a message will be sent to end to the connection with the server and the client program will close. 
+ *
  */
 
 #include "programFunctions.h"
@@ -23,19 +32,15 @@ int main(int argc, char* argv[])
 		.serverName = {0},
 		.serverAddress = {0},
 		.status = true,
-		.inWin = NULL,			// Input window
+		.inWin = NULL,	
 		.outWin = NULL
 	};
 
-	bool serverOrIPFlag = false;		// Flag to note if 3rd arg is server name (true) or an IP address (false)
-	bool programEndFlag = false;            // Flag to end the program, turned true when >>bye<< message is sent
-
-	// UI Variables
-	//Message msg;
+	bool serverOrIPFlag = false;		
+	bool programEndFlag = false;           
 	char buf[81] = {0};
 	int msgRow = MSG_ROW_START;
 	int maxPrintRow;
-
 	char message[MAX_BUFFER];      
 	static char timestamp[MAX_TIMESTAMP];		
 	char clientIP[MAX_IP];					
@@ -56,31 +61,21 @@ int main(int argc, char* argv[])
 
 	hiMessage(&clientInfo);
 
-
-	// Initialize the ncurses library
 	initscr();
 	cbreak();
-	//noecho();
 	keypad(stdscr, TRUE);
 
-	drawWin(&clientInfo.inWin, &clientInfo.outWin, &msgRow, &maxPrintRow); // Draw the input and output windows
+	drawWin(&clientInfo.inWin, &clientInfo.outWin, &msgRow, &maxPrintRow);
 
 	if (pthread_create(&displayThread, NULL, incomingMessages, (void*)&clientInfo) != 0)
-	{
-		//printf("ERROR: Failed to create incoming thread.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
-		
+	{		
 		return -1;
 	}
 
-
-	//send loop
 	while (clientInfo.status)
 	{
-		// Get the message from the user
 		getMsg(clientInfo.inWin, buf);
-
 		buf[strcspn(buf, "\n")] = '\0';
-
 
 		if (strcmp(buf, ">>bye<<") == 0)
 		{
@@ -92,14 +87,11 @@ int main(int argc, char* argv[])
 		{
 			break;
 		}
-		// resetInputWin(clientInfo.inWin);
 	}
 
 	pthread_cancel(displayThread);
 	pthread_join(displayThread, NULL);
 
-	//programEnd(socketID, inWin, outWin); // end the program
-	endProg(clientInfo.inWin, clientInfo.outWin); // end the program
+	endProg(clientInfo.inWin, clientInfo.outWin);
 	return 0;
-
 }

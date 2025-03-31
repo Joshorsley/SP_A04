@@ -1,8 +1,8 @@
-/* FILE :       messageFunctions.c
+/* FILE :       programFunctions.c
  * PROJECT :    SP A4 : Can We Talk System
- * AUTHORS :
+ * AUTHORS :	Kalina cathcart, Josh Horsley, Jon Paventi, Daimon Quinn, Jiwoo (Tony) Yang
  * DATE :       2025 - 03 -22
- * DESCRIPTION : This file holds the functions related to creating, sending and recieving messages.
+ * DESCRIPTION : This file holds the functions related to managing the program and the connection to the server. 
  */
 
 
@@ -12,11 +12,18 @@
 #include "messageFunctions.h"
 #include "main.h"
 
-
-
 #define PORT 8000 
 
-
+/*
+ * FUNCTION : 	 parseArgs 
+ * DESCRIPTION : This function takes the arguments passed from the command line and places them into their related variables. 
+ * 		 The user ID is the first argument, which will be the name given to the server to identify this particular client connection. 
+ * 		 The server name or IP address is the second argument. Either or is stored inthe serverName variable for further processing. 
+ * PARAMETERS :  argc and argv = variables carrying the command line arguments and number of 
+ * 		 userID = holds the name chosen by the user to be used to identify this client's connection to the server. 
+ * 		 serverName = holds the server name or IP address given from the command line for further processing. 
+ * RETURNS : 	 True if both userID and serverName arguments are present, false if one or both are missing or could not be parsed. 
+ */
 bool parseArgs(int argc, char* argv[], char* userID, char* serverName)
 {
 	bool userExists = false;
@@ -35,7 +42,6 @@ bool parseArgs(int argc, char* argv[], char* userID, char* serverName)
 			strncpy(userID, argv[i] + ARG1_SKIP, MAX_USER_ID - 1);
 			userID[MAX_USER_ID - 1] = '\0';
 			userExists = true;
-
 		}
 		else if (strncmp(argv[i], "-server", ARG2_SKIP) == 0)
 		{
@@ -54,11 +60,17 @@ bool parseArgs(int argc, char* argv[], char* userID, char* serverName)
 		return true;
 	}
 
-
 	return false;
-
 }
 
+
+/*
+ * FUNCTION :	 isAddress 
+ * DESCRIPTION : This function will check if the address is a IP address.
+ * PARAMETERS :  serverName - to pass the value to be checked 
+ * RETURNS : 	 True if the string is a valid IP address, false otherwise. 
+ *
+ */
 bool isAddress(const char* serverName)
 {
 	struct sockaddr_in sa;
@@ -68,10 +80,11 @@ bool isAddress(const char* serverName)
 
 
 /*
-* FUNCTION:		resolveServerName
-* DESCRIPTION:	This function resolves the server name to an IP address
-* PARAMETERS:	None
-* RETURNS:		boolean value, true if the server name is successfully resolved, false otherwise
+* FUNCTION:	resolveServerName
+* DESCRIPTION:	This function resolves the server name to an IP address. 
+* 		It will convert the found IP address to a string and store it in the serverAddress variable
+* PARAMETERS:	client info - struct holding the servername value within 
+* RETURNS:	Truerue if the server name is successfully resolved, false otherwise
 */
 bool resolveServerName(ClientInfo *clientInfo)
 {
@@ -82,12 +95,18 @@ bool resolveServerName(ClientInfo *clientInfo)
         return false;
     }
     
-    // Convert the IP address to a string and store it in the serverAddress variable
     strcpy(clientInfo->serverAddress, inet_ntoa(*(struct in_addr*)host_entry->h_addr_list[0]));
     return true;
 }
 
-
+/*
+* FUNCTION:     connectToServer
+* DESCRIPTION:  Establishes a TCP connection through sockets to the specified server using the server address variable.
+* 		isAddress is called here to determine if the server address variable is a server name or IP address. 
+* 		If it is a server name, resolveServerName is called to find the related IP address.  
+* PARAMETERS:   ClientInfo *clientInfo - pointer to ClientInfo structure with connection details
+* RETURNS:      int - socket file descriptor if successful, -1 on error
+*/
 int connectToServer(ClientInfo *clientInfo) 
 {
     int socketID;
@@ -124,7 +143,6 @@ int connectToServer(ClientInfo *clientInfo)
 
     if (connect(socketID, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) 
     {
-        //perror("Error: Connect failed");
         close(socketID);
         return -1;
     }
