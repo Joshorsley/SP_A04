@@ -15,118 +15,28 @@
 // PARAMETERS :
 // RETURNS :
 void* clientHandler(void* arg) {
-    //Extract the client index and free the memory
+
     int index = *((int*)arg);
     free(arg);
 
-    // Get the client socket and prepare a buffer
     int clientSocket = clients[index].socket;
-    char buffer[BUFFER_SIZE];
-    int bytesRead;
-
-    // Get the client's IP address as a string
-    char clientIP[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &(clients[index].address.sin_addr), clientIP, INET_ADDRSTRLEN);
-
-    printf("Handling client %d with IP %s \n", index, clientIP);
-
-    // First message from client should be the username
-    bytesRead = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
-    if (bytesRead <= 0) {
-        printf("Client disconnected before sending username\n");
-
-        // Lock the mutex before updating shared data
-        pthread_mutex_lock(&clients_mutex);
-
-        // Clean up and mark slot as inactive
-        close(clients[index].socket);
-        clients[index].active = 0;
-        clientCount--;
-
-        checkForServerShutdown();
-
-        pthread_mutex_unlock(&clients_mutex);
-
-        return NULL;
-    }
     
-    //NULL -terminate the received data
-    buffer[bytesRead] = '\0';
+    logClientConnection(index);
 
-    if (isUsernameTaken(buffer, index)) {
-        printf("Client %d attempted to use taken username: %s\n", index, buffer);
-        
-        // Send rejection message to client
-        const char *msg = "Sorry, that username is already taken. Please reconnect with a different username.\n";
-        send(clientSocket, msg, strlen(msg), 0);
-
-        // Clean up and disconnect the client
-        pthread_mutex_lock(&clients_mutex);
-        close(clients[index].socket);
-        clients[index].active = 0;
-        clientCount--;
-        checkForServerShutdown();
-        pthread_mutex_unlock(&clients_mutex);
-
+    if(!registerUsername(index)) {
         return NULL;
     }
 
-    // Store the username 
-    pthread_mutex_lock(&clients_mutex);
-    strncpy(clients[index].username, buffer, MAX_NAME_LENGTH -1);
-    clients[index].username[MAX_NAME_LENGTH -1] = '\0';
-    pthread_mutex_unlock(&clients_mutex);
+    announceUserJoined(index);
 
-    printf("Client %d registered with username: %s\n", index, clients[index].username);
+    processClientMessages(index);
 
-    //Announce that a new user has joined
-    char announcement[BUFFER_SIZE];
-    snprintf(announcement, sizeof(announcement), "User %s has joined the chat", clients[index].username);
-    broadcastMessage(announcement, index);
-
-    // Main message loop - receive and process messages
-    while ((bytesRead = recv(clientSocket, buffer, sizeof(buffer) -1, 0)) > 0) {
-        // NULL- terminate the received data
-        buffer[bytesRead]= '\0';
-
-        printf("Received from %s: %s\n", clients[index].username, buffer);
-
-        // Check if client wants to disconnect
-        if (strcmp(buffer, ">>bye<<") == 0) {
-            printf("Client %s is disconnecting\n", clients[index].username);
-            break;
-        }
-
-        // Process and broadcast the message
-        broadcastMessage(buffer, index);
-    }
-
-    if (bytesRead == 0) {
-        printf("Client %s closed connection\n", clients[index].username);
-    }else if (bytesRead < 0) {
-        printf("Error receiving from client %s\n", clients[index].username);
-    }
-
-    // Announce that the user has left
-    snprintf(announcement, sizeof(announcement), "User %s has left the chat", clients[index].username);
-    broadcastMessage(announcement, index);
-
-    // Lock the mutex before updating shared data
-    pthread_mutex_lock(&clients_mutex);
-
-    // Clean up and mark slot as inactive
-    close(clients[index].socket);
-    clients[index].active = 0;
-    clientCount--;
-
-    checkForServerShutdown();
-
-    pthread_mutex_unlock(&clients_mutex);
-
-    printf("Client %d cleaned up, total clients: %d\n", index, clientCount);
+    handleClientDisconnect(index);
 
     return NULL;
 }
+
+
 
 // FUNCTION :
 // DESCRIPTION : 
@@ -152,6 +62,111 @@ void broadcastMessage(char *message, int senderIndex) {
     }
 
     pthread_mutex_unlock(&clients_mutex);
+}
+
+// Log client connection details
+void logClientConnection(int index) {
+    char clientIP[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &(clients[index].address.sin_addr), clientIP, INET_ADDRSTRLEN);
+    printf("Handling client %d with IP %s \n", index, clientIP);
+}
+
+// Handle username registration process
+bool registerUsername(int index) {
+    int clientSocket = clients[index].socket;
+    char buffer[BUFFER_SIZE];
+    int bytesRead;
+    
+    // First message from client should be the username
+    bytesRead = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
+    if (bytesRead <= 0) {
+        printf("Client disconnected before sending username\n");
+        disconnectClient(index);
+        return false;
+    }
+    
+    //NULL-terminate the received data
+    buffer[bytesRead] = '\0';
+    
+    if (isUsernameTaken(buffer, index)) {
+        printf("Client %d attempted to use taken username: %s\n", index, buffer);
+        
+        // Send rejection message to client
+        const char *msg = "Sorry, that username is already taken. Please reconnect with a different username.\n";
+        send(clientSocket, msg, strlen(msg), 0);
+        disconnectClient(index);
+        return false;
+    }
+    
+    // Store the username 
+    pthread_mutex_lock(&clients_mutex);
+    strncpy(clients[index].username, buffer, MAX_NAME_LENGTH - 1);
+    clients[index].username[MAX_NAME_LENGTH - 1] = '\0';
+    pthread_mutex_unlock(&clients_mutex);
+    
+    printf("Client %d registered with username: %s\n", index, clients[index].username);
+    return true;
+}
+
+// Announce that a user has joined
+void announceUserJoined(int index) {
+    char announcement[BUFFER_SIZE];
+    snprintf(announcement, sizeof(announcement), "User %s has joined the chat", clients[index].username);
+    broadcastMessage(announcement, index);
+}
+
+// Process client messages in a loop
+void processClientMessages(int index) {
+    int clientSocket = clients[index].socket;
+    char buffer[BUFFER_SIZE];
+    int bytesRead;
+    
+    // Main message loop - receive and process messages
+    while ((bytesRead = recv(clientSocket, buffer, sizeof(buffer) - 1, 0)) > 0) {
+        // NULL-terminate the received data
+        buffer[bytesRead] = '\0';
+        printf("Received from %s: %s\n", clients[index].username, buffer);
+        
+        // Check if client wants to disconnect
+        if (strcmp(buffer, ">>bye<<") == 0) {
+            printf("Client %s is disconnecting\n", clients[index].username);
+            break;
+        }
+        
+        // Process and broadcast the message
+        broadcastMessage(buffer, index);
+    }
+    
+    if (bytesRead == 0) {
+        printf("Client %s closed connection\n", clients[index].username);
+    } else if (bytesRead < 0) {
+        printf("Error receiving from client %s\n", clients[index].username);
+    }
+}
+
+// Handle client disconnection
+void handleClientDisconnect(int index) {
+    // Announce that the user has left
+    char announcement[BUFFER_SIZE];
+    snprintf(announcement, sizeof(announcement), "User %s has left the chat", clients[index].username);
+    broadcastMessage(announcement, index);
+    
+    disconnectClient(index);
+}
+
+// Disconnect a client and clean up
+void disconnectClient(int index) {
+    // Lock the mutex before updating shared data
+    pthread_mutex_lock(&clients_mutex);
+    
+    // Clean up and mark slot as inactive
+    close(clients[index].socket);
+    clients[index].active = 0;
+    clientCount--;
+    checkForServerShutdown();
+    
+    pthread_mutex_unlock(&clients_mutex);
+    printf("Client %d cleaned up, total clients: %d\n", index, clientCount);
 }
 
 // FUNCTION :

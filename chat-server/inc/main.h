@@ -11,6 +11,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <time.h>
+#include <stdbool.h>
 
 // Constants
 #define PORT 8000               // may need to change as my computer is using port 8000

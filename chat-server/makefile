@@ -1,6 +1,6 @@
 CC = gcc
-# Add -Wno-stringop-truncation to suppress the strncpy warning
-CFLAGS = -Wall -Wextra -O2 -Wno-stringop-truncation -Iinc
+
+CFLAGS = -O2 -Iinc
 LDFLAGS = -pthread
 SRC_DIR = src
 OBJ_DIR = obj

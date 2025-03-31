@@ -4,9 +4,14 @@
 * PROGRAMMERS : Josh Horsley, Kalina Cathcart, John Paventi, Daimon Quin, Tony Yang
 * FIRST VERSION : 2025-03-20
 * UPDATED : 2025-03-31
-* DESCRIPTION :
-* FUNCTIONS:
+* DESCRIPTION : Main server implementation for the "Can We Talk?" chat system.
+*               Handles socket creation, client connections, and thread management
+* FUNCTIONS: 
+*     int main(int argc, char* argv[]) - Entry point that initializes the server,
+*                                        creates a listening socket, and handles
+*                                        incoming client connections
 */
+
 #include "server_utils.h"
 #include "client_utils.h"
 #include "signals.h"
@@ -125,7 +130,7 @@ int main(int argc, char* argv[]) {
             pthread_mutex_unlock(&clients_mutex);
             continue;
         } else {
-            //Detach thread -we don't need to join it later
+            
             pthread_detach(thread);
             printf("Created thread for client %d\n", i);
         }
