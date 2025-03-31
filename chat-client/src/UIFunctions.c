@@ -19,7 +19,6 @@
 */
 void *incomingMessages(void* clientInfo)
 {
-    ClientInfo* info = (ClientInfo*)clientInfo;
     receiveMessages(clientInfo);
     return NULL;
 }
@@ -32,11 +31,10 @@ void *incomingMessages(void* clientInfo)
 *               The function will also set up color schemes and borders for the UI.
 * PARAMETERS:   WINDOW **inWin - pointer to input window pointer
 *               WINDOW **outWin - pointer to output window pointer
-*               int *msgRow - pointer to store starting message row
 *               int *maxPrintRow - pointer to store maximum printable rows
 * RETURNS:      void - nothing is returned 
 */
-void drawWin(WINDOW **inWin, WINDOW **outWin, int *msgRow, int *maxPrintRow)
+void drawWin(WINDOW **inWin, WINDOW **outWin, int *maxPrintRow)
 {
     int rows, cols;
     getmaxyx(stdscr, rows, cols);
@@ -79,6 +77,7 @@ void drawBorder(WINDOW *win, const char *label)
 {
     int rows, cols;
     getmaxyx(win, rows, cols);
+    (void)rows; // Unused variable
 
     mvhline(3, 0, '-', cols);
     mvprintw(3, (cols - strlen(label)) / 2, "%s", label); 
@@ -132,7 +131,7 @@ void printMsg(WINDOW *outWin, int row, char message[])
     char formattedMsg[BUFFER_SIZE];
     snprintf(formattedMsg, sizeof(formattedMsg), "%s", message);
 
-    mvwprintw(outWin, row, 1, formattedMsg);
+    mvwprintw(outWin, row, 1, "%s", formattedMsg);
     wrefresh(outWin);
 
     wmove(stdscr, 1, 4);

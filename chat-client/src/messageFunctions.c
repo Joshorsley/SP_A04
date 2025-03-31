@@ -17,15 +17,6 @@
 #include "UIFunctions.h"
 #include "main.h"
 
-#define MAX_SNT_MESSAGE 80 
-#define MAX_RECVD_MESSAGE 40 
-#define MAX_BUFFER 1024 
-#define MAX_TIMESTAMP 10 
-#define MAX_IP 16 
-#define MSG_ROW_START 1 
-
-
-
 /*
 * FUNCTION:     hiMessage
 * DESCRIPTION:  Sends an initial connection message to the server with the user ID.
@@ -59,7 +50,7 @@ bool hiMessage(ClientInfo* clientInfo)
 * RETURNS:      bool - true if message was sent successfully, false otherwise
 */
 
-void byeMessage(ClientInfo* clientInfo)
+bool byeMessage(ClientInfo* clientInfo)
 {
     
     char message[MAX_BUFFER]; 

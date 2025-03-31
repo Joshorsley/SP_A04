@@ -12,13 +12,12 @@
 #ifndef UI_FUNCTIONS_H
 #define UI_FUNCTIONS_H
 
-#define MSG_ROW_START 2
-
 void *incomingMessages(void* clientInfo);
-void drawWin(WINDOW **inWin, WINDOW **outWin, int *msgRow, int *maxPrintRow);
+void drawWin(WINDOW **inWin, WINDOW **outWin, int *maxPrintRow);
 void drawBorder(WINDOW *win, const char *label);
 void resetInputWin(WINDOW *inWin);
 void getMsg(WINDOW *inWin, char *buf);
+void printMsg(WINDOW *outWin, int row, char message[]);
 void endProg(WINDOW *inWin, WINDOW *outWin);
 
 #endif // UI_FUNCTIONS_H

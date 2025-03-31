@@ -14,8 +14,15 @@
 #include <string.h>
 #include "main.h"
 
+#define MAX_SNT_MESSAGE 80 
+#define MAX_RECVD_MESSAGE 40 
+#define MAX_BUFFER 1024 
+#define MAX_TIMESTAMP 10 
+#define MAX_IP 16 
+#define MSG_ROW_START 1 
+
 bool hiMessage(ClientInfo* clientInfo);
-void byeMessage(ClientInfo* clientInfo);
+bool byeMessage(ClientInfo* clientInfo);
 void receiveMessages(ClientInfo* info);
 
 #endif // MESSAGE_FUNCTIONS_H

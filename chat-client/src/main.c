@@ -36,7 +36,6 @@ int main(int argc, char* argv[])
 	};
 
 	char buf[81] = {0};
-	int msgRow = MSG_ROW_START;
 	int maxPrintRow;
 
 	if (parseArgs(argc, argv, clientInfo.userID, clientInfo.serverName) == false)
@@ -58,7 +57,7 @@ int main(int argc, char* argv[])
 	cbreak();
 	keypad(stdscr, TRUE);
 
-	drawWin(&clientInfo.inWin, &clientInfo.outWin, &msgRow, &maxPrintRow);
+	drawWin(&clientInfo.inWin, &clientInfo.outWin, &maxPrintRow);
 
 	if (pthread_create(&displayThread, NULL, incomingMessages, (void*)&clientInfo) != 0)
 	{
