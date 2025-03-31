@@ -18,6 +18,7 @@
 
 bool hiMessage(ClientInfo* clientInfo);
 void byeMessage(ClientInfo* clientInfo);
+void receiveMessages(int clientSocket);
 //bool createMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID);
 //bool sendMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID);
 //bool receiveMessage(char* clientIP, char* userID);

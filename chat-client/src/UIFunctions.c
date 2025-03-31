@@ -13,6 +13,9 @@
 void *incomingMessages(void* clientInfo)
 {
 	printf("Incoming messages thread started.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+    ClientInfo* info = (ClientInfo*)clientInfo;
+
+    receiveMessages(info->socketID);
 
     return NULL;
 }
@@ -60,22 +63,6 @@ void getMsg(WINDOW *inWin, char *buf)
     resetInputWin(inWin);
     mvwgetnstr(inWin, 1, 4, buf, 80);
 }
-
-// void printMsg(WINDOW *outWin, int row, Message msg)
-// {
-//     char timestamp[10];
-//     time_t now = time(NULL);
-//     struct tm *t = localtime(&now);
-//     strftime(timestamp, sizeof(timestamp), "%H:%M:%S", t);
-    
-//     char formattedMsg[100];
-    
-//     snprintf(formattedMsg, sizeof(formattedMsg),"%-15s %s >> %-41s (%s)", 
-//     msg.ip, msg.username, msg.message, timestamp);
-    
-//     mvwprintw(outWin, row, 1, formattedMsg);
-//     wrefresh(outWin);
-// }
 
 void endProg(WINDOW *inWin, WINDOW *outWin) {
     delwin(inWin); // Delete input window
