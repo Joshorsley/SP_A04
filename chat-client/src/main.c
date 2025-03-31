@@ -22,11 +22,16 @@ int main(int argc, char* argv[])
 		.socketID = -1,
 		.serverName = {0},
 		.serverAddress = {0},
-		.outWin = NULL,
-		.inWin = NULL,
 		.status = true
 	};
 
+	bool serverOrIPFlag = false;		// Flag to note if 3rd arg is server name (true) or an IP address (false)
+	bool programEndFlag = false;            // Flag to end the program, turned true when >>bye<< message is sent
+
+	// UI Variables
+	WINDOW* inWin;			// Input window
+	WINDOW* outWin;			// Output window
+	//Message msg;
 	char buf[81] = {0};
 	int msgRow = MSG_ROW_START;
 	int maxPrintRow;
@@ -37,25 +42,28 @@ int main(int argc, char* argv[])
 
 
 
-	printf("========================================\n");	 // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
-	printf("Welcome to the Chat - Client Terminal\n");	 // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 
 	if (parseArgs(argc, argv, clientInfo.userID, clientInfo.serverName) == false)
 	{
-		printf("ERROR: Failed to parse arguments.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 		return -1;
 	}
 
 	clientInfo.socketID = connectToServer(&clientInfo);
 	if (clientInfo.socketID == -1)
 	{
-		printf("ERROR: Failed to create connection.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 		return -1;
 	}
 
 	hiMessage(&clientInfo);
 
 
+	// Initialize the ncurses library
+	initscr();
+	cbreak();
+	//noecho();
+	keypad(stdscr, TRUE);
+
+	drawWin(&inWin, &outWin, &msgRow, &maxPrintRow); // Draw the input and output windows
 
 	if (pthread_create(&displayThread, NULL, incomingMessages, (void*)&clientInfo) != 0)
 	{
@@ -68,9 +76,8 @@ int main(int argc, char* argv[])
 	//send loop
 	while (clientInfo.status)
 	{
-
-		printf("Enter your message: ");
-		fgets(buf, sizeof(buf), stdin);
+		// Get the message from the user
+		getMsg(inWin, buf);
 
 		buf[strcspn(buf, "\n")] = '\0';
 
@@ -83,10 +90,9 @@ int main(int argc, char* argv[])
 
 		if (send(clientInfo.socketID, buf, strlen(buf), 0) == -1)
 		{
-			printf("ERROR: Failed to create message.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 			break;
 		}
-		resetInputWin(clientInfo.inWin);
+		// resetInputWin(clientInfo.inWin);
 	}
 
 

@@ -36,31 +36,40 @@ void drawWin(WINDOW **inWin, WINDOW **outWin, int *msgRow, int *maxPrintRow)
     wbkgd(*inWin, COLOR_PAIR(1));
     wbkgd(*outWin, COLOR_PAIR(1));
     
-    mvwprintw(*inWin, 1, 2, "> ");
-    
     // border
     mvhline(3, 0, '-', cols); // print '-' on 3rd line
     const char *label = " Messages ";
     mvprintw(3, (cols - strlen(label)) / 2, "%s", label); // insert "MESSAGES" in the middle of border
-
+    
     getmaxyx(*outWin, *maxPrintRow, cols);
     *maxPrintRow -= 2;
     
-    wrefresh(*inWin);
+    keypad(*inWin, TRUE);
+
     wrefresh(*outWin);
     refresh();
+
+    mvwprintw(*inWin, 1, 2, "> ");
+    wmove(*inWin, 1, 4);
+    curs_set(1);
+    wrefresh(*inWin);
 }
 
 void resetInputWin(WINDOW *inWin)
 {
     werase(inWin);
     mvwprintw(inWin, 1, 2, "> ");
-    wrefresh(inWin);
+    wmove(inWin, 1, 4);  // Position cursor after prompt
+    wrefresh(inWin);     // Show the changes
 }
 
 void getMsg(WINDOW *inWin, char *buf)
 {
     resetInputWin(inWin);
+    echo();             // 문자 에코 활성화
+    curs_set(1);        // 커서 가시성 설정
+    wmove(inWin, 1, 4); // 프롬프트 뒤에 커서 위치
+    wrefresh(inWin);    // 커서 보이게 창 업데이트
     mvwgetnstr(inWin, 1, 4, buf, 80);
 }
 
