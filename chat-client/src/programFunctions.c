@@ -124,7 +124,7 @@ int connectToServer(ClientInfo *clientInfo)
 
     if (connect(socketID, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) 
     {
-        perror("Error: Connect failed");
+        //perror("Error: Connect failed");
         close(socketID);
         return -1;
     }

@@ -12,7 +12,7 @@
 
 void *incomingMessages(void* clientInfo)
 {
-	printf("Incoming messages thread started.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+	//printf("Incoming messages thread started.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
     ClientInfo* info = (ClientInfo*)clientInfo;
 
     receiveMessages(info->socketID);
@@ -66,10 +66,10 @@ void resetInputWin(WINDOW *inWin)
 void getMsg(WINDOW *inWin, char *buf)
 {
     resetInputWin(inWin);
-    echo();             // 문자 에코 활성화
-    curs_set(1);        // 커서 가시성 설정
-    wmove(inWin, 1, 4); // 프롬프트 뒤에 커서 위치
-    wrefresh(inWin);    // 커서 보이게 창 업데이트
+    echo();            
+    curs_set(1);       
+    wmove(inWin, 1, 4); 
+    wrefresh(inWin);    
     mvwgetnstr(inWin, 1, 4, buf, 80);
 }
 

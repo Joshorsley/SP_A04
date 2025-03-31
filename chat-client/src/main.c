@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
 
 	if (pthread_create(&displayThread, NULL, incomingMessages, (void*)&clientInfo) != 0)
 	{
-		printf("ERROR: Failed to create incoming thread.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
+		//printf("ERROR: Failed to create incoming thread.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 		
 		return -1;
 	}
@@ -95,15 +95,11 @@ int main(int argc, char* argv[])
 		// resetInputWin(clientInfo.inWin);
 	}
 
-
-
-
-
-
 	pthread_cancel(displayThread);
 	pthread_join(displayThread, NULL);
 
 	//programEnd(socketID, inWin, outWin); // end the program
+	endProg(inWin, outWin); // end the program
 	return 0;
 
 }

@@ -88,10 +88,10 @@ void receiveMessages(int socketID)
         int bytesReceived = recv(socketID, buffer, MAX_BUFFER - 1, 0);
         if (bytesReceived <= 0) 
 		{
-            printf("Server disconnected or error occurred.\n");
+            //printf("Server disconnected or error occurred.\n");
             break;
         }
         buffer[bytesReceived] = '\0';
-        printf("%s", buffer); 
+        //printf("%s", buffer); 
     }
 }
