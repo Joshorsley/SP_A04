@@ -113,6 +113,9 @@ void printMsg(WINDOW *outWin, int row, char message[])
 
     mvwprintw(outWin, row, 1, formattedMsg);
     wrefresh(outWin);
+
+    wmove(stdscr, 1, 4);
+    wrefresh(stdscr);
 }
 
 
