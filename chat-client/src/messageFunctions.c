@@ -118,15 +118,12 @@ void byeMessage(char* message, char* clientIP, bool programEndFlag, char* userID
 * 			
 */
 
-bool createMessage(char* message,char* messageContent, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID)
+bool createMessage(char* message, char* clientIP, bool programEndFlag, char* userID, char* timestamp, int socketID)
 {
 
 
     // Get the current time stamp
     getTimestamp(timestamp);
-
-    // Get user input (up to 80 characters)
-	message = messageContent;
 
     // Skip if message area was empty 
     if (strlen(message) == 0)

@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
 
 
 	// Start the program with initial functions 
-	if (!programStart(argc, argv[], serverOrIPFlag, socketID, serverName, userID, clientIP, serverAddress, timestamp, message, programEndFlag))
+	if (!programStart(argc, argv, serverOrIPFlag, socketID, serverName, userID, clientIP, serverAddress, timestamp, message, programEndFlag))
 	{
 		printf("ERROR: Failed to start the program.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 		return -1;
@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
 		if (strlen(message) > 0)
 		{
 
-			if (!createMessage(message, clientIP, programEndFlag, userID, timestamp, serverOrIPFlag, socketID))
+			if (!createMessage(message, clientIP, programEndFlag, userID, timestamp, socketID))
 			{
 				printf("ERROR: Failed to create message.\n"); // ********************************REMOVE BEFORE SUBMISSION - DEBUG LINE ONLY
 
